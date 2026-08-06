@@ -1,4 +1,4 @@
-﻿# Node modules - DON'T push these!
+﻿# Node modules
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -38,10 +38,6 @@ desktop.ini
 # Backup files
 *.backup
 *.bak
-
-# Package lock files (optional - keep these)
-# package-lock.json
-# yarn.lock
 
 # Coverage directory
 coverage/

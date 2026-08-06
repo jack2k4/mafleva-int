@@ -10,13 +10,11 @@ function About() {
           Mafleva International Limited was founded with a simple mission: to bring premium beauty, 
           fashion, and fragrance products to customers around the world.
         </p>
-        
         <h2 style={{ marginTop: '30px' }}>Our Values</h2>
         <ul style={{ fontSize: '1.1rem', lineHeight: '2' }}>
           <li>✨ Quality - We source only the best products</li>
-          <li>🌱 Sustainability - Eco-friendly packaging and practices</li>
+          <li>🌱 Sustainability - Eco-friendly packaging</li>
           <li>❤️ Customer First - Your satisfaction is our priority</li>
-          <li>🌟 Authenticity - Every product is verified</li>
         </ul>
       </div>
     </div>
