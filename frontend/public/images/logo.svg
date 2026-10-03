@@ -1,0 +1,22 @@
+<svg width="1400" height="620" viewBox="0 0 1400 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mafleva logo">
+  <defs>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0%" stop-color="#8e6847"/>
+      <stop offset="50%" stop-color="#b99467"/>
+      <stop offset="100%" stop-color="#6d4f38"/>
+    </linearGradient>
+  </defs>
+
+  <g fill="none" stroke-linecap="round">
+    <path d="M120 165 C 350 55, 1050 55, 1280 165" stroke="url(#gold)" stroke-width="12" opacity="0.95"/>
+    <path d="M150 230 C 410 145, 990 145, 1250 230" stroke="#d9c1a5" stroke-width="4" opacity="0.8"/>
+  </g>
+
+  <text x="700" y="360" text-anchor="middle" font-size="280" font-family="Georgia, 'Times New Roman', serif" fill="#4a342b" font-weight="400" letter-spacing="-12">Mafleva</text>
+
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#4a342b">
+    <text x="1125" y="220" text-anchor="start" font-size="36">®</text>
+    <text x="700" y="445" text-anchor="middle" font-size="36" font-weight="500">#Made with Love</text>
+    <text x="887" y="448" text-anchor="start" font-size="18">TM</text>
+  </g>
+</svg>
