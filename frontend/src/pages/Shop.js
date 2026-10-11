@@ -1,12 +1,28 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { formatCurrency, resolveCurrencyFromLocale } from '../utils/currency';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
 function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
+  const location = useLocation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState(defaultCategory);
   const [subCategory, setSubCategory] = useState('all');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const categoryParam = String(params.get('category') || '').toLowerCase();
+    const subCategoryParam = String(params.get('subCategory') || '').toLowerCase();
+    const allowedCategories = ['all', 'beauty', 'clothing', 'perfumes', 'health'];
+
+    const nextCategory = allowedCategories.includes(categoryParam)
+      ? categoryParam
+      : (defaultCategory || 'all');
+
+    setCategory(nextCategory);
+    setSubCategory(subCategoryParam || 'all');
+  }, [location.search, defaultCategory]);
 
   useEffect(() => {
     let url = 'http://localhost:5000/api/products';

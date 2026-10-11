@@ -19,7 +19,7 @@ const featureCollections = [
     description: 'Discover premium skincare, makeup, and haircare products',
     image: '/images%201/ba741899489fc321a99b0860f1d38847.jpg',
     button: 'Shop Beauty →',
-    link: '/beauty',
+    link: '/shop?category=beauty',
     highlight: '#8d6d4e'
   },
   {
