@@ -1,6 +1,15 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
 
+const paymentMethods = ['M-Pesa', 'Airtel Money', 'Visa', 'Mastercard', 'PayPal', 'Stripe'];
+const socialLinks = [
+  { name: 'Facebook', url: 'https://facebook.com/maflevainternational', icon: 'f' },
+  { name: 'Instagram', url: 'https://instagram.com/maflevainternational', icon: '◎' },
+  { name: 'TikTok', url: 'https://tiktok.com/@maflevainternational', icon: '♪' },
+  { name: 'Threads', url: 'https://www.threads.net/@maflevainternational', icon: '◌' },
+  { name: 'X', url: 'https://x.com/maflevainternational', icon: 'X' }
+];
+
 const Footer = () => {
   return (
     <footer style={{
@@ -13,15 +22,67 @@ const Footer = () => {
         maxWidth: '1200px',
         margin: '0 auto',
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '30px'
       }}>
         <div>
           <h3 style={{ marginBottom: '15px' }}>Mafleva International</h3>
-          <p style={{ color: '#b2bec3', fontSize: '0.9rem' }}>
+          <p style={{ color: '#b2bec3', fontSize: '0.9rem', lineHeight: 1.7 }}>
             Your premium destination for beauty, fashion, and fragrances.
           </p>
         </div>
+
+        <div>
+          <h3 style={{ marginBottom: '15px' }}>Payment Methods</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {paymentMethods.map((method) => (
+              <span
+                key={method}
+                style={{
+                  background: '#636e72',
+                  color: 'white',
+                  padding: '6px 10px',
+                  borderRadius: '999px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600'
+                }}
+              >
+                {method}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 style={{ marginBottom: '15px' }}>Follow Us</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+            {socialLinks.map((social) => (
+              <a
+                key={social.name}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={social.name}
+                title={social.name}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  background: '#ffffff',
+                  color: '#2d3436',
+                  textDecoration: 'none',
+                  fontWeight: '700'
+                }}
+              >
+                {social.icon}
+              </a>
+            ))}
+          </div>
+        </div>
+
         <div>
           <h3 style={{ marginBottom: '15px' }}>Quick Links</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -29,14 +90,6 @@ const Footer = () => {
             <li><Link to="/shop" style={{ color: '#b2bec3', textDecoration: 'none' }}>Shop</Link></li>
             <li><Link to="/about" style={{ color: '#b2bec3', textDecoration: 'none' }}>About</Link></li>
             <li><Link to="/contact" style={{ color: '#b2bec3', textDecoration: 'none' }}>Contact</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h3 style={{ marginBottom: '15px' }}>Categories</h3>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            <li><Link to="/shop?category=beauty" style={{ color: '#b2bec3', textDecoration: 'none' }}>Beauty</Link></li>
-            <li><Link to="/shop?category=clothing" style={{ color: '#b2bec3', textDecoration: 'none' }}>Clothing</Link></li>
-            <li><Link to="/shop?category=perfumes" style={{ color: '#b2bec3', textDecoration: 'none' }}>Perfumes</Link></li>
           </ul>
         </div>
       </div>
@@ -48,7 +101,7 @@ const Footer = () => {
         color: '#b2bec3',
         fontSize: '0.9rem'
       }}>
-        <p>&copy; 2024 Mafleva International Limited. All rights reserved.</p>
+        <p>&copy; 2026 Mafleva International Limited. All rights reserved.</p>
       </div>
     </footer>
   );

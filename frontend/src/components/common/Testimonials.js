@@ -186,179 +186,97 @@ const Testimonials = ({
     );
   };
 
-  // For carousel/slider view
+  // For the editorial-style testimonial layout matching the reference
   const renderCarousel = () => {
+    const active = testimonials[currentIndex];
+
     return (
-      <div style={{ position: 'relative' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '200px'
+            background: '#f6ede1',
+            borderRadius: '24px',
+            padding: '36px 28px',
+            boxShadow: '0 12px 30px rgba(58, 41, 29, 0.08)',
+            border: '1px solid rgba(142, 104, 71, 0.08)',
+            minHeight: '420px'
           }}
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          <div style={{
-            background: 'white',
-            padding: '30px',
-            borderRadius: '15px',
-            boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
-            maxWidth: '700px',
-            margin: '0 auto',
-            textAlign: 'center',
-            transition: 'all 0.3s ease'
-          }}>
-            <div style={{ marginBottom: '15px' }}>
-              {renderStars(testimonials[currentIndex].rating)}
-            </div>
-            <FaQuoteLeft style={{ color: '#ff6b6b', opacity: 0.2, fontSize: '36px' }} />
-            <p style={{
-              fontSize: '1.1rem',
-              lineHeight: '1.8',
-              color: '#2d3436',
-              margin: '10px 0',
-              fontStyle: 'italic'
-            }}>
-              "{testimonials[currentIndex].comment}"
+          <div style={{ flex: 1, textAlign: 'left' }}>
+            <div style={{ marginBottom: '18px' }}>{renderStars(active.rating)}</div>
+
+            <h2
+              style={{
+                margin: '0 0 10px 0',
+                fontSize: 'clamp(2.6rem, 4vw, 4.6rem)',
+                lineHeight: '1.05',
+                color: '#2d3436',
+                letterSpacing: '-0.04em',
+                fontWeight: 300,
+                fontFamily: 'Georgia, "Times New Roman", serif'
+              }}
+            >
+              {title}
+            </h2>
+
+            <p
+              style={{
+                margin: '0 0 16px 0',
+                fontSize: '1.25rem',
+                lineHeight: '1.5',
+                color: '#4b4b4b',
+                fontWeight: 400,
+                fontStyle: 'italic'
+              }}
+            >
+              {subtitle}
             </p>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '15px',
-              marginTop: '15px'
-            }}>
-              <img
-                src={testimonials[currentIndex].avatar}
-                alt={testimonials[currentIndex].name}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+              <FaQuoteLeft style={{ color: '#c8b5a0', fontSize: '28px' }} />
+              <p
                 style={{
-                  width: '60px',
-                  height: '60px',
+                  margin: 0,
+                  fontSize: '1.16rem',
+                  lineHeight: '1.7',
+                  color: '#374151',
+                  fontWeight: 400
+                }}
+              >
+                "{active.comment}"
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '22px' }}>
+              <img
+                src={active.avatar}
+                alt={active.name}
+                style={{
+                  width: '58px',
+                  height: '58px',
                   borderRadius: '50%',
-                  objectFit: 'cover'
+                  objectFit: 'cover',
+                  border: '2px solid rgba(142, 104, 71, 0.12)'
                 }}
               />
-              <div style={{ textAlign: 'left' }}>
-                <h4 style={{ margin: '0 0 3px 0', fontSize: '1.1rem' }}>
-                  {testimonials[currentIndex].name}
-                </h4>
-                <p style={{
-                  margin: 0,
-                  color: '#6c757d',
-                  fontSize: '0.9rem'
-                }}>
-                  {testimonials[currentIndex].role}
-                </p>
+              <div>
+                <h4 style={{ margin: '0 0 2px 0', fontSize: '1.1rem', color: '#2d3436' }}>{active.name}</h4>
+                <p style={{ margin: 0, color: '#6c757d', fontSize: '0.92rem' }}>{active.role}</p>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Navigation Arrows */}
-        <button
-          onClick={prevSlide}
-          style={{
-            position: 'absolute',
-            left: '10px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px',
-            transition: 'all 0.3s ease'
-          }}
-          className="nav-btn"
-          onMouseEnter={(e) => e.currentTarget.style.background = '#ff6b6b'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-        >
-          <FaChevronLeft />
-        </button>
-        <button
-          onClick={nextSlide}
-          style={{
-            position: 'absolute',
-            right: '10px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px',
-            transition: 'all 0.3s ease'
-          }}
-          className="nav-btn"
-          onMouseEnter={(e) => e.currentTarget.style.background = '#ff6b6b'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-        >
-          <FaChevronRight />
-        </button>
-
-        {/* Dots indicator */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '10px',
-          marginTop: '20px'
-        }}>
-          {testimonials.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                border: 'none',
-                background: index === currentIndex ? '#ff6b6b' : '#dfe6e9',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-            />
-          ))}
         </div>
       </div>
     );
   };
 
   return (
-    <div style={{ padding: '40px 20px' }}>
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h2 style={{
-          fontSize: '2.5rem',
-          color: '#2d3436',
-          marginBottom: '10px'
-        }}>
-          {title}
-        </h2>
-        <p style={{
-          fontSize: '1.1rem',
-          color: '#6c757d',
-          maxWidth: '600px',
-          margin: '0 auto'
-        }}>
-          {subtitle}
-        </p>
-      </div>
-
-      {/* Carousel View */}
+    <div style={{ marginTop: '30px', padding: '40px 20px 60px', background: '#f6ede1', borderRadius: '28px' }}>
+      {/* Editorial Layout */}
       {renderCarousel()}
 
       {/* Grid View - Uncomment to show all testimonials */}

@@ -53,12 +53,12 @@ function Beauty() {
 
   // Subcategory categories for filtering
   const categories = [
-    { id: 'all', name: 'All Beauty', icon: '💄' },
-    { id: 'skincare', name: 'Skincare', icon: '✨' },
-    { id: 'herbal', name: 'Herbal', icon: '🌿' },
-    { id: 'oils', name: 'Oils', icon: '🧴' },
-    { id: 'makeup', name: 'Makeup', icon: '💄' },
-    { id: 'haircare', name: 'Haircare', icon: '💇‍♀️' }
+    { id: 'all', name: 'All Beauty', icon: '/images/WhatsApp Image 2026-08-12 at 18.53.30.jpeg' },
+    { id: 'skincare', name: 'Skincare', icon: '/images/WhatsApp Image 2026-08-12 at 18.53.33.jpeg' },
+    { id: 'herbal', name: 'Herbal', icon: '/images/WhatsApp Image 2026-08-12 at 18.53.34.jpeg' },
+    { id: 'oils', name: 'Oils', icon: '/images/oils.jpeg' },
+    { id: 'makeup', name: 'Makeup', icon: '/images 1/ba741899489fc321a99b0860f1d38847.jpg' },
+    { id: 'haircare', name: 'Haircare', icon: '/images/WhatsApp Image 2026-08-12 at 18.53.35 (1).jpeg' }
   ];
 
   // Subcategory cards for quick navigation (displayed prominently)
@@ -66,7 +66,7 @@ function Beauty() {
     { 
       id: 'herbal', 
       name: 'Herbal', 
-      icon: '🌿', 
+      icon: '/images/WhatsApp Image 2026-08-12 at 18.53.34.jpeg', 
       description: 'Natural herbal beauty products', 
       color: '#00b894',
       bgColor: '#e8f8f5'
@@ -74,7 +74,7 @@ function Beauty() {
     { 
       id: 'oils', 
       name: 'Oils', 
-      icon: '🧴', 
+      icon: '/images/oils.jpeg', 
       description: 'Pure natural oils for skin & hair', 
       color: '#fdcb6e',
       bgColor: '#fef9e7'
@@ -82,7 +82,7 @@ function Beauty() {
     { 
       id: 'skincare', 
       name: 'Skincare', 
-      icon: '✨', 
+      icon: '/images/WhatsApp Image 2026-08-12 at 18.53.33.jpeg', 
       description: 'Premium skincare essentials', 
       color: '#fd79a8',
       bgColor: '#fdf0f3'
@@ -90,7 +90,7 @@ function Beauty() {
     { 
       id: 'makeup', 
       name: 'Makeup', 
-      icon: '💄', 
+      icon: '/images 1/ba741899489fc321a99b0860f1d38847.jpg', 
       description: 'High-quality makeup products', 
       color: '#e17055',
       bgColor: '#fae9e6'
@@ -98,7 +98,7 @@ function Beauty() {
     { 
       id: 'haircare', 
       name: 'Haircare', 
-      icon: '💇‍♀️', 
+      icon: '/images/WhatsApp Image 2026-08-12 at 18.53.35 (1).jpeg', 
       description: 'Nourishing hair care products', 
       color: '#0984e3',
       bgColor: '#e8f4fd'
@@ -140,8 +140,13 @@ function Beauty() {
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Page Header */}
       <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px' }}>
-          💄 Beauty Collection
+        <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <img
+            src="/images/WhatsApp Image 2026-08-12 at 18.53.30.jpeg"
+            alt="Beauty collection"
+            style={{ width: '52px', height: '52px', borderRadius: '12px', objectFit: 'cover' }}
+          />
+          Beauty Collection
         </h1>
         <p style={{ color: '#6c757d', fontSize: '1.1rem' }}>
           Discover premium skincare, makeup, haircare, herbal, and oils products
@@ -184,7 +189,17 @@ function Beauty() {
                 }
               }}
             >
-              <div style={{ fontSize: '2.5rem' }}>{card.icon}</div>
+              <div style={{ fontSize: '2.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                {typeof card.icon === 'string' && card.icon.startsWith('/') ? (
+                  <img
+                    src={card.icon}
+                    alt={card.name}
+                    style={{ width: '42px', height: '42px', borderRadius: '12px', objectFit: 'cover' }}
+                  />
+                ) : (
+                  card.icon
+                )}
+              </div>
               <h4 style={{ 
                 margin: '10px 0 5px 0', 
                 color: activeCategory === card.id ? 'white' : '#2d3436'
@@ -225,10 +240,22 @@ function Beauty() {
               cursor: 'pointer',
               fontWeight: 'bold',
               fontSize: '0.9rem',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px'
             }}
           >
-            {cat.icon} {cat.name}
+            {typeof cat.icon === 'string' && cat.icon.startsWith('/') ? (
+              <img
+                src={cat.icon}
+                alt={cat.name}
+                style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }}
+              />
+            ) : (
+              cat.icon
+            )}
+            {cat.name}
           </button>
         ))}
       </div>

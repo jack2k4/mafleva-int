@@ -62,7 +62,24 @@ const Navbar = ({ cartCount = 0 }) => {
         }}>
           <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>Home</Link>
           <Link to="/shop" style={{ color: 'white', textDecoration: 'none' }}>Shop</Link>
-          <Link to="/beauty" style={{ color: 'white', textDecoration: 'none' }}>💄 Beauty</Link>
+          <Link
+            to="/beauty"
+            style={{
+              color: 'white',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <img
+              src="/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg"
+              alt="Beauty"
+              style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }}
+            />
+            Beauty
+          </Link>
+          <Link to="/beauty" style={{ color: 'white', textDecoration: 'none' }}>🌿 Health</Link>
           <Link to="/clothing" style={{ color: 'white', textDecoration: 'none' }}>👗 Clothing</Link>
           <Link to="/about" style={{ color: 'white', textDecoration: 'none' }}>About</Link>
           <Link to="/testimonials" style={{ color: 'white', textDecoration: 'none' }}>Testimonials</Link>

@@ -10,6 +10,30 @@ function Clothing() {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('default');
 
+  const wearImages = [
+    '/wear/23626f85d3836f72d6a10dc547adb601.jpg',
+    '/wear/45591080c617ba19d510476947307a2e.jpg',
+    '/wear/62a50cc5b187807962bc6d67691c97d8.jpg',
+    '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg',
+    '/wear/97d67efc93c9e1ea705a9845ece40b13.jpg',
+    '/wear/9a9c7e6e063fe62302f281fbacbccb09.jpg'
+  ];
+
+  const buildWearFallbackProducts = () => {
+    const bySub = ['men', 'women', 'kids'];
+    return wearImages.map((image, index) => ({
+      id: 'wear-' + (index + 1),
+      name: 'Wear Collection ' + (index + 1),
+      brand: 'Mafleva Wear',
+      price: 49 + (index * 5),
+      rating: 4.4 + (index % 3) * 0.2,
+      numReviews: 18 + index * 4,
+      subCategory: bySub[index % bySub.length],
+      image,
+      sizes: ['S', 'M', 'L']
+    }));
+  };
+
   useEffect(() => {
     fetchClothing();
   }, [activeCategory]);
@@ -44,29 +68,44 @@ function Clothing() {
           productsData.sort((a, b) => b.rating - a.rating);
         }
         
+        if (!productsData.length) {
+          productsData = buildWearFallbackProducts();
+          if (activeCategory !== 'all') {
+            productsData = productsData.filter(p => p.subCategory === activeCategory);
+          }
+        }
+
         setProducts(productsData);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching clothing:', err);
+        const fallback = buildWearFallbackProducts();
+        setProducts(activeCategory === 'all' ? fallback : fallback.filter(p => p.subCategory === activeCategory));
         setLoading(false);
       });
   };
 
   const categories = [
-    { id: 'all', name: 'All Clothing', icon: '👗' },
-    { id: 'men', name: "Men's Fashion", icon: '👔' },
-    { id: 'women', name: "Women's Fashion", icon: '👗' },
-    { id: 'kids', name: "Kids' Fashion", icon: '🧒' }
+    { id: 'all', name: 'All Clothing', image: wearImages[0] },
+    { id: 'men', name: "Men's Fashion", image: wearImages[1] },
+    { id: 'women', name: "Women's Fashion", image: wearImages[2] },
+    { id: 'kids', name: "Kids' Fashion", image: wearImages[3] }
   ];
 
-  const getCategoryIcon = (product) => {
-    switch(product.subCategory) {
-      case 'men': return '👔';
-      case 'women': return '👗';
-      case 'kids': return '🧒';
-      default: return '👕';
+  const getCategoryImage = (product, index) => {
+    if (product?.image) {
+      return product.image;
     }
+
+    const bySubCategory = {
+      men: wearImages[1],
+      women: wearImages[2],
+      kids: wearImages[3],
+      all: wearImages[0]
+    };
+
+    return bySubCategory[product?.subCategory] || wearImages[(Number(product?.id || index) + 1) % wearImages.length];
   };
 
   const renderStars = (rating) => {
@@ -93,8 +132,13 @@ function Clothing() {
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Page Header */}
       <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px' }}>
-          👗 Clothing Collection
+        <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <img
+            src="/images%201/clothing.jpg"
+            alt="Clothing collection"
+            style={{ width: '52px', height: '52px', borderRadius: '12px', objectFit: 'cover' }}
+          />
+          Clothing Collection
         </h1>
         <p style={{ color: '#6c757d', fontSize: '1.1rem' }}>
           Discover our premium clothing collection for every style and occasion
@@ -126,7 +170,12 @@ function Clothing() {
               transition: 'all 0.3s ease'
             }}
           >
-            {cat.icon} {cat.name}
+            <img
+              src={cat.image}
+              alt={cat.name}
+              style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }}
+            />
+            {cat.name}
           </button>
         ))}
       </div>
@@ -263,7 +312,7 @@ function Clothing() {
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '25px'
         }}>
-          {products.map(product => (
+          {products.map((product, index) => (
             <div
               key={product.id}
               style={{
@@ -309,9 +358,13 @@ function Clothing() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '5rem'
+                  overflow: 'hidden'
                 }}>
-                  {getCategoryIcon(product)}
+                  <img
+                    src={getCategoryImage(product, index)}
+                    alt={product.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
               </Link>
 
