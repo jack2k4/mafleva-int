@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 
 const ADMIN_EMAIL = 'admin@mafleva.com';
 const ADMIN_PASSWORD = 'admin123';
@@ -8,6 +8,10 @@ function AdminDashboard() {
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [analyticsSummary, setAnalyticsSummary] = useState(null);
+  const [inventoryAlerts, setInventoryAlerts] = useState([]);
+  const [dashboardError, setDashboardError] = useState('');
+  const [dashboardLoading, setDashboardLoading] = useState(false);
 
   const [products, setProducts] = useState([
     { id: 1, name: 'Glow Bloom Face Cream', category: 'beauty', price: 45, stock: 30, image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg' },
@@ -46,15 +50,79 @@ function AdminDashboard() {
 
   const [couponForm, setCouponForm] = useState({ code: '', discount: '' });
 
+  const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const controller = new AbortController();
+
+    const loadDashboardData = async () => {
+      setDashboardLoading(true);
+      setDashboardError('');
+
+      try {
+        const [analyticsResponse, alertsResponse] = await Promise.all([
+          fetch(apiBaseUrl + '/api/analytics/summary', { signal: controller.signal }),
+          fetch(apiBaseUrl + '/api/inventory/alerts?threshold=10', { signal: controller.signal })
+        ]);
+
+        if (!analyticsResponse.ok) {
+          throw new Error('Failed to load analytics summary');
+        }
+
+        if (!alertsResponse.ok) {
+          throw new Error('Failed to load inventory alerts');
+        }
+
+        const analyticsData = await analyticsResponse.json();
+        const alertsData = await alertsResponse.json();
+
+        setAnalyticsSummary(analyticsData);
+        setInventoryAlerts(alertsData.products || []);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setDashboardError('Live analytics could not be loaded. Showing local dashboard data.');
+        }
+      } finally {
+        setDashboardLoading(false);
+      }
+    };
+
+    loadDashboardData();
+
+    return () => controller.abort();
+  }, [isLoggedIn, apiBaseUrl]);
+
   const stats = useMemo(() => {
     const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const lowStockProducts = products.filter((product) => Number(product.stock || 0) < 10);
+    const salesByCategory = products.reduce((accumulator, product) => {
+      const category = product.category || 'other';
+      accumulator[category] = (accumulator[category] || 0) + Number(product.price || 0) * Number(product.stock || 0);
+      return accumulator;
+    }, {});
     return {
       products: products.length,
       orders: orders.length,
       messages: messages.length,
-      revenue: totalRevenue
+      revenue: totalRevenue,
+      lowStockProducts,
+      salesByCategory
     };
   }, [products, orders, messages]);
+
+  const activeStats = analyticsSummary
+    ? {
+        products: analyticsSummary.totalProducts ?? stats.products,
+        orders: analyticsSummary.totalOrders ?? stats.orders,
+        messages: stats.messages,
+        revenue: analyticsSummary.totalRevenue ?? stats.revenue,
+        lowStockProducts: inventoryAlerts.length > 0 ? inventoryAlerts : stats.lowStockProducts,
+        salesByCategory: analyticsSummary.revenueByCategory || stats.salesByCategory,
+        orderStatuses: analyticsSummary.orderStatuses || {}
+      }
+    : stats;
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -221,16 +289,64 @@ function AdminDashboard() {
         </div>
 
         {activeTab === 'overview' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-            <StatCard label="Total Products" value={stats.products} />
-            <StatCard label="Total Orders" value={stats.orders} />
-            <StatCard label="Customer Messages" value={stats.messages} />
-            <StatCard label="Sales Revenue" value={'$' + stats.revenue} />
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+              <StatCard label="Total Products" value={activeStats.products} />
+              <StatCard label="Total Orders" value={activeStats.orders} />
+              <StatCard label="Customer Messages" value={activeStats.messages} />
+              <StatCard label="Sales Revenue" value={'$' + activeStats.revenue} />
+            </div>
+
+            {dashboardLoading && (
+              <div style={{ marginTop: '12px', color: '#6c757d' }}>Refreshing live analytics...</div>
+            )}
+
+            {dashboardError && (
+              <div style={{ marginTop: '12px', color: '#e17055', fontWeight: 600 }}>{dashboardError}</div>
+            )}
+
+            <div style={{ ...panelStyle, marginTop: '16px' }}>
+              <h3 style={{ marginTop: 0 }}>Inventory Alerts</h3>
+              {activeStats.lowStockProducts.length === 0 ? (
+                <p style={{ color: '#00b894', marginBottom: 0 }}>No low-stock items right now.</p>
+              ) : (
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {activeStats.lowStockProducts.map((product) => (
+                    <div key={product.id} style={{ ...rowCard, background: '#fff7f5', borderColor: '#ffd3cc' }}>
+                      <div>
+                        <strong>{product.name}</strong>
+                        <div style={{ color: '#e17055', fontSize: '0.9rem' }}>
+                          {product.stock === 0 ? 'Out of stock' : `Only ${product.stock} left`}
+                        </div>
+                      </div>
+                      <span style={{ fontWeight: 'bold', color: '#e17055' }}>{product.category}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ ...panelStyle, marginTop: '16px' }}>
+              <h3 style={{ marginTop: 0 }}>Category Performance</h3>
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {Object.entries(activeStats.salesByCategory).map(([category, value]) => (
+                  <div key={category}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ textTransform: 'capitalize' }}>{category}</span>
+                      <strong>${value.toFixed(0)}</strong>
+                    </div>
+                    <div style={{ background: '#f0f0f0', borderRadius: '999px', overflow: 'hidden', height: '8px' }}>
+                      <div style={{ width: `${Math.min(100, (value / Math.max(1, activeStats.revenue)) * 100)}%`, background: '#ff6b6b', height: '100%' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
         {activeTab === 'products' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
             <div style={panelStyle}>
               <h3>Products</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -332,15 +448,26 @@ function AdminDashboard() {
         {activeTab === 'reports' && (
           <div style={panelStyle}>
             <h3>Sales Reports</h3>
-            <p style={{ margin: '6px 0' }}>Total Revenue: <strong>${stats.revenue}</strong></p>
-            <p style={{ margin: '6px 0' }}>Total Orders: <strong>{stats.orders}</strong></p>
-            <p style={{ margin: '6px 0' }}>Average Order Value: <strong>${stats.orders ? (stats.revenue / stats.orders).toFixed(2) : '0.00'}</strong></p>
+            <p style={{ margin: '6px 0' }}>Total Revenue: <strong>${activeStats.revenue}</strong></p>
+            <p style={{ margin: '6px 0' }}>Total Orders: <strong>{activeStats.orders}</strong></p>
+            <p style={{ margin: '6px 0' }}>Average Order Value: <strong>${activeStats.orders ? (activeStats.revenue / activeStats.orders).toFixed(2) : '0.00'}</strong></p>
             <p style={{ margin: '6px 0' }}>Top Product: <strong>{products[0] ? products[0].name : 'N/A'}</strong></p>
+            {analyticsSummary && analyticsSummary.orderStatuses && (
+              <div style={{ marginTop: '12px' }}>
+                <h4 style={{ marginBottom: '8px' }}>Order Status Breakdown</h4>
+                {Object.entries(analyticsSummary.orderStatuses).map(([status, count]) => (
+                  <div key={status} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f3f3f3' }}>
+                    <span>{status}</span>
+                    <strong>{count}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === 'coupons' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
             <div style={panelStyle}>
               <h3>Create Discount Coupon</h3>
               <form onSubmit={addCoupon}>
@@ -382,7 +509,7 @@ function AdminDashboard() {
 
 function StatCard({ label, value }) {
   return (
-    <div style={{ background: 'white', borderRadius: '12px', padding: '18px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+    <div style={{ background: 'white', borderRadius: '12px', padding: '18px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', minWidth: 0 }}>
       <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>{label}</div>
       <div style={{ color: '#2d3436', fontSize: '1.8rem', fontWeight: 'bold' }}>{value}</div>
     </div>

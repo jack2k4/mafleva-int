@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { formatCurrency, resolveCurrencyFromLocale } from '../utils/currency';
+import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
 function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
   const [products, setProducts] = useState([]);
@@ -48,7 +49,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
     { id: 'beauty', name: 'Beauty' },
     { id: 'clothing', name: 'Clothing' },
     { id: 'perfumes', name: 'Perfumes' },
-    { id: 'health', name: 'Health' }
+    { id: 'health', name: 'Health Products' }
   ];
 
   const categoryImageLibrary = {
@@ -332,7 +333,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
       { id: 'refillable', name: 'Refillable' }
     ],
     health: [
-      { id: 'all', name: 'All Health' },
+      { id: 'all', name: 'All Health Products' },
       { id: 'wellness', name: 'Wellness' },
       { id: 'care', name: 'Care' }
     ]
@@ -378,9 +379,18 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
 
   const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-KE';
   const currency = selectedCurrency || resolveCurrencyFromLocale(locale);
+  const structuredData = buildCatalogStructuredData({
+    pageTitle: 'Shop Products | Mafleva International Limited',
+    pageDescription: 'Browse all Mafleva International products, including beauty, clothing, perfumes, and wellness essentials.',
+    pagePath: '/shop',
+    products,
+    currency,
+    fallbackDescription: 'Mafleva International Limited catalog product.'
+  });
 
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', background: '#f6efe7', borderRadius: '18px' }}>
+      <StructuredData data={structuredData} />
       <h1 style={{ color: '#2d3436', marginBottom: '20px' }}>Shop Our Collection</h1>
       
       {/* Category Filters */}
@@ -459,6 +469,8 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
             const normalizedCategory = getNormalizedCategory(product);
             const displayName = product.name || product.title || (normalizedCategory === 'health' ? 'Health Product' : 'Product');
             const displayBrand = product.brand || (normalizedCategory === 'health' ? 'Mafleva Health' : product.category || 'Mafleva');
+            const isWaitingCategory = category === 'clothing' || category === 'perfumes';
+            const productImage = isWaitingCategory ? '' : getProductImage(product, index);
 
             return (
             <div key={product.id} style={{
@@ -477,9 +489,9 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
                 fontSize: '4rem',
                 position: 'relative'
               }}>
-                  {getProductImage(product, index) ? (
+                  {productImage ? (
                     <img
-                      src={getProductImage(product, index)}
+                      src={productImage}
                       alt={product.name}
                       onError={(e) => {
                         e.target.style.display = 'none';
@@ -502,7 +514,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
                       }}
                     />
                   )}
-                {product.discountPrice && (
+                {!isWaitingCategory && product.discountPrice && (
                   <span style={{
                     position: 'absolute',
                     top: '10px',
@@ -518,73 +530,79 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
                   </span>
                 )}
               </div>
-              <div style={{ padding: '20px' }}>
-                <h3 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>
-                  {displayName}
-                </h3>
-                <p style={{ color: '#6c757d', fontSize: '0.9rem', margin: '0 0 5px 0' }}>
-                  {displayBrand}
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
-                  <span style={{ color: '#fdcb6e' }}>★</span>
-                  <span style={{ fontSize: '0.9rem' }}>{product.rating || 0}</span>
-                  <span style={{ color: '#6c757d', fontSize: '0.8rem' }}>
-                    ({product.numReviews || 0} reviews)
-                  </span>
+              {isWaitingCategory ? (
+                <div style={{ padding: '20px', textAlign: 'center' }}>
+                  <p style={{ margin: 0, color: '#6c757d', fontWeight: 'bold' }}>Waiting for products</p>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    {product.discountPrice ? (
-                      <>
+              ) : (
+                <div style={{ padding: '20px' }}>
+                  <h3 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>
+                    {displayName}
+                  </h3>
+                  <p style={{ color: '#6c757d', fontSize: '0.9rem', margin: '0 0 5px 0' }}>
+                    {displayBrand}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
+                    <span style={{ color: '#fdcb6e' }}>★</span>
+                    <span style={{ fontSize: '0.9rem' }}>{product.rating || 0}</span>
+                    <span style={{ color: '#6c757d', fontSize: '0.8rem' }}>
+                      ({product.numReviews || 0} reviews)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      {product.discountPrice ? (
+                        <>
+                          <span style={{
+                            fontSize: '1.3rem',
+                            fontWeight: 'bold',
+                            color: '#ff6b6b'
+                          }}>
+                            {formatCurrency(product.discountPrice, locale, currency)}
+                          </span>
+                          <span style={{
+                            fontSize: '0.9rem',
+                            color: '#6c757d',
+                            textDecoration: 'line-through',
+                            marginLeft: '8px'
+                          }}>
+                            {formatCurrency(product.price, locale, currency)}
+                          </span>
+                        </>
+                      ) : (
                         <span style={{
                           fontSize: '1.3rem',
                           fontWeight: 'bold',
-                          color: '#ff6b6b'
-                        }}>
-                          {formatCurrency(product.discountPrice, locale, currency)}
-                        </span>
-                        <span style={{
-                          fontSize: '0.9rem',
-                          color: '#6c757d',
-                          textDecoration: 'line-through',
-                          marginLeft: '8px'
+                          color: '#2d3436'
                         }}>
                           {formatCurrency(product.price, locale, currency)}
                         </span>
-                      </>
-                    ) : (
-                      <span style={{
-                        fontSize: '1.3rem',
-                        fontWeight: 'bold',
-                        color: '#2d3436'
-                      }}>
-                        {formatCurrency(product.price, locale, currency)}
-                      </span>
-                    )}
+                      )}
+                    </div>
+                    <button
+                      onClick={() => onAddToCart && onAddToCart({
+                        id: product.id,
+                        name: displayName,
+                        price: product.discountPrice || product.price,
+                        image: getProductImage(product, index),
+                        category: normalizedCategory,
+                        images: product.images || []
+                      })}
+                      style={{
+                      padding: '8px 16px',
+                      background: '#ff6b6b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                    >
+                      Add to Cart
+                    </button>
                   </div>
-                  <button
-                    onClick={() => onAddToCart && onAddToCart({
-                      id: product.id,
-                      name: displayName,
-                      price: product.discountPrice || product.price,
-                      image: getProductImage(product, index),
-                      category: normalizedCategory,
-                      images: product.images || []
-                    })}
-                    style={{
-                    padding: '8px 16px',
-                    background: '#ff6b6b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                  >
-                    Add to Cart
-                  </button>
                 </div>
-              </div>
+              )}
             </div>
             );
           })}

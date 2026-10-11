@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
+import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
 function Beauty() {
   const [products, setProducts] = useState([]);
@@ -136,8 +137,18 @@ function Beauty() {
     fetchBeauty();
   };
 
+  const structuredData = buildCatalogStructuredData({
+    pageTitle: 'Beauty Collection | Mafleva International Limited',
+    pageDescription: 'Explore skincare, makeup, haircare, herbal, and oils products in the Mafleva beauty collection.',
+    pagePath: '/beauty',
+    products,
+    currency: 'KES',
+    fallbackDescription: 'Beauty product from Mafleva International Limited.'
+  });
+
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
+      <StructuredData data={structuredData} />
       {/* Page Header */}
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>

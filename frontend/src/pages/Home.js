@@ -10,7 +10,7 @@ const categories = [
   { name: 'Beauty', icon: '/images%201/ba741899489fc321a99b0860f1d38847.jpg', link: '/beauty', color: '#fd79a8', desc: 'Skincare & Makeup' },
   { name: 'Clothing', icon: '/images%201/clothing.jpg', link: '/clothing', color: '#0984e3', desc: 'Men, Women & Kids' },
   { name: 'Perfumes', icon: '/images%201/download.png', link: '/perfumes', color: '#6c5ce7', desc: 'Branded & Niche' },
-  { name: 'Health', icon: '🌿', link: '/health', color: '#2ecc71', desc: 'Wellness & Care' }
+  { name: 'Health Products', icon: '🌿', link: '/health', color: '#2ecc71', desc: 'Wellness & Care' }
 ];
 
 const featureCollections = [

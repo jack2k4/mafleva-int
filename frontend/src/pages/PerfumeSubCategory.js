@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
+import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
 function PerfumeSubCategory() {
   const [products, setProducts] = useState([]);
@@ -9,6 +10,14 @@ function PerfumeSubCategory() {
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('default');
+
+  const perfumeImages = [
+    '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg',
+    '/perfumes/1f943a1d5fc12debdd2dfc91cf717cf9.jpg',
+    '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg',
+    '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg',
+    '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg'
+  ];
 
   useEffect(() => {
     fetchPerfumes();
@@ -55,7 +64,7 @@ function PerfumeSubCategory() {
     { 
       id: 'men', 
       name: 'Men', 
-      icon: '👔', 
+      image: perfumeImages[0],
       description: 'Bold & masculine fragrances', 
       color: '#2d3436',
       bgColor: '#dfe6e9'
@@ -63,7 +72,7 @@ function PerfumeSubCategory() {
     { 
       id: 'women', 
       name: 'Women', 
-      icon: '👗', 
+      image: perfumeImages[1],
       description: 'Elegant & floral scents', 
       color: '#fd79a8',
       bgColor: '#fdf0f3'
@@ -71,7 +80,7 @@ function PerfumeSubCategory() {
     { 
       id: 'unisex', 
       name: 'Unisex', 
-      icon: '♻️', 
+      image: perfumeImages[2],
       description: 'Versatile & unique blends', 
       color: '#00b894',
       bgColor: '#e8f8f5'
@@ -79,12 +88,23 @@ function PerfumeSubCategory() {
     { 
       id: 'refillable', 
       name: 'Refillable', 
-      icon: '🔄', 
+      image: perfumeImages[3],
       description: 'Sustainable & refillable', 
       color: '#0984e3',
       bgColor: '#e8f4fd'
     }
   ];
+
+  const getPerfumeImageForProduct = (product, index) => {
+    const bySubCategory = {
+      men: perfumeImages[0],
+      women: perfumeImages[1],
+      unisex: perfumeImages[2],
+      refillable: perfumeImages[3]
+    };
+
+    return bySubCategory[product?.subCategory] || perfumeImages[index % perfumeImages.length] || perfumeImages[4];
+  };
 
   const renderStars = (rating) => {
     const stars = [];
@@ -106,11 +126,21 @@ function PerfumeSubCategory() {
     fetchPerfumes();
   };
 
+  const structuredData = buildCatalogStructuredData({
+    pageTitle: 'Perfumes Collection | Mafleva International Limited',
+    pageDescription: 'Discover branded, niche, and signature fragrances for men, women, and unisex styles.',
+    pagePath: '/perfumes',
+    products,
+    currency: 'KES',
+    fallbackDescription: 'Fragrance product from Mafleva International Limited.'
+  });
+
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
+      <StructuredData data={structuredData} />
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px' }}>
-          🌸 Premium Perfumes
+          Premium Perfumes
         </h1>
         <p style={{ color: '#6c757d', fontSize: '1.1rem' }}>
           Discover our exquisite collection of fragrances for every personality and occasion
@@ -141,7 +171,13 @@ function PerfumeSubCategory() {
                 transform: activeCategory === card.id ? 'scale(1.05)' : 'scale(1)'
               }}
             >
-              <div style={{ fontSize: '2.5rem' }}>{card.icon}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <img
+                  src={card.image}
+                  alt={card.name}
+                  style={{ width: '62px', height: '62px', borderRadius: '12px', objectFit: 'cover' }}
+                />
+              </div>
               <h4 style={{ 
                 margin: '10px 0 5px 0', 
                 color: activeCategory === card.id ? 'white' : '#2d3436'
@@ -271,7 +307,13 @@ function PerfumeSubCategory() {
       {/* Products Grid */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🌸</div>
+          <div style={{ marginBottom: '20px' }}>
+            <img
+              src={perfumeImages[4]}
+              alt="Perfume loading"
+              style={{ width: '96px', height: '96px', borderRadius: '12px', objectFit: 'cover' }}
+            />
+          </div>
           <p style={{ fontSize: '1.2rem', color: '#6c757d' }}>Loading perfumes...</p>
         </div>
       ) : products.length === 0 ? (
@@ -286,7 +328,7 @@ function PerfumeSubCategory() {
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '25px'
         }}>
-          {products.map(product => (
+          {products.map((product, index) => (
             <div key={product.id} style={{
               background: 'white',
               borderRadius: '12px',
@@ -319,12 +361,13 @@ function PerfumeSubCategory() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '4rem'
+                  overflow: 'hidden'
                 }}>
-                  {product.subCategory === 'men' ? '👔' :
-                   product.subCategory === 'women' ? '👗' :
-                   product.subCategory === 'unisex' ? '♻️' :
-                   product.subCategory === 'refillable' ? '🔄' : '🌸'}
+                  <img
+                    src={getPerfumeImageForProduct(product, index)}
+                    alt={product.name || 'Perfume product'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
               </Link>
               <div style={{ padding: '20px' }}>

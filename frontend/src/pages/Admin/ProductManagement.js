@@ -117,6 +117,8 @@ function ProductManagement() {
     p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const lowStockProducts = filteredProducts.filter((product) => Number(product.stock || 0) < 10);
+
   const getCategoryLabel = (category) => {
     const labels = {
       beauty: '💄 Beauty',
@@ -173,6 +175,7 @@ function ProductManagement() {
         gap: '10px',
         marginBottom: '20px',
         alignItems: 'center'
+        , flexWrap: 'wrap'
       }}>
         <div style={{
           display: 'flex',
@@ -203,13 +206,26 @@ function ProductManagement() {
         </span>
       </div>
 
+      {lowStockProducts.length > 0 && (
+        <div style={{
+          background: '#fff7f5',
+          border: '1px solid #ffd3cc',
+          borderRadius: '12px',
+          padding: '14px 16px',
+          marginBottom: '20px'
+        }}>
+          <strong style={{ color: '#e17055' }}>Low stock alert:</strong>{' '}
+          {lowStockProducts.length} {lowStockProducts.length === 1 ? 'item is' : 'items are'} below 10 units.
+        </div>
+      )}
+
       <div style={{
         background: 'white',
         borderRadius: '10px',
         overflow: 'hidden',
         boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
       }}>
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto' }} className="table-scroll-shell">
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8f9fa' }}>
@@ -275,6 +291,9 @@ function ProductManagement() {
                       }}>
                         {product.stock || 0}
                       </span>
+                      {product.stock < 10 && (
+                        <div style={{ fontSize: '0.75rem', color: '#e17055', marginTop: '4px' }}>Low stock</div>
+                      )}
                     </td>
                     <td style={{ padding: '15px' }}>
                       <span style={{ color: '#fdcb6e' }}>★</span>

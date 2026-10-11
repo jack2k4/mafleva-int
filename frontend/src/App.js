@@ -1,21 +1,22 @@
-﻿import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+﻿import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import { COUNTRY_OPTIONS, resolveCurrencyFromLocale } from './utils/currency';
 
-// Import all pages
-import Home from './pages/Home';
-import Shop from './pages/Shop';
-import Gallery from './pages/Gallery';
-import Beauty from './pages/Beauty';
-import Clothing from './pages/Clothing';
-import PerfumeSubCategory from './pages/PerfumeSubCategory';
-import About from './pages/About';
-import Account from './pages/Account';
-import Contact from './pages/Contact';
-import TestimonialsPage from './pages/TestimonialsPage';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import CartPage from './pages/Cart';
+// Import all pages lazily to reduce the initial bundle size.
+const Home = lazy(() => import('./pages/Home'));
+const Shop = lazy(() => import('./pages/Shop'));
+const Gallery = lazy(() => import('./pages/Gallery'));
+const Beauty = lazy(() => import('./pages/Beauty'));
+const Clothing = lazy(() => import('./pages/Clothing'));
+const PerfumeSubCategory = lazy(() => import('./pages/PerfumeSubCategory'));
+const About = lazy(() => import('./pages/About'));
+const Account = lazy(() => import('./pages/Account'));
+const Contact = lazy(() => import('./pages/Contact'));
+const TestimonialsPage = lazy(() => import('./pages/TestimonialsPage'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
+const CartPage = lazy(() => import('./pages/Cart'));
 
 const Navbar = ({ cartCount = 0 }) => {
   return (
@@ -128,6 +129,95 @@ const socialLinks = [
   { name: 'Threads', url: 'https://www.threads.net/@maflevainternational', icon: '◌' },
   { name: 'X', url: 'https://x.com/maflevainternational', icon: 'X' }
 ];
+
+const seoDefaults = {
+  title: 'Mafleva International Limited',
+  description: 'Mafleva International Limited offers premium beauty, wellness, clothing, and fragrance products for shoppers in Kenya and beyond.',
+  canonical: '/',
+  keywords: 'Mafleva International, beauty products, clothing, perfumes, health products, Kenyan ecommerce, online store',
+  robots: 'index,follow'
+};
+
+const seoPages = {
+  '/': {
+    title: 'Mafleva International Limited | Beauty, Clothing, Perfumes & Health',
+    description: 'Shop premium beauty, clothing, perfumes, and health essentials from Mafleva International Limited. Discover quality products and convenient shopping.',
+    canonical: '/',
+    robots: 'index,follow'
+  },
+  '/shop': {
+    title: 'Shop Products | Mafleva International Limited',
+    description: 'Browse all Mafleva International products, including beauty, clothing, perfumes, and wellness essentials.',
+    canonical: '/shop',
+    robots: 'index,follow'
+  },
+  '/beauty': {
+    title: 'Beauty Collection | Mafleva International Limited',
+    description: 'Explore skincare, makeup, haircare, herbal, and oils products in the Mafleva beauty collection.',
+    canonical: '/beauty',
+    robots: 'index,follow'
+  },
+  '/clothing': {
+    title: 'Clothing Collection | Mafleva International Limited',
+    description: 'Shop stylish men, women, and kids clothing from the Mafleva International fashion range.',
+    canonical: '/clothing',
+    robots: 'index,follow'
+  },
+  '/perfumes': {
+    title: 'Perfumes Collection | Mafleva International Limited',
+    description: 'Discover branded, niche, and signature fragrances for men, women, and unisex styles.',
+    canonical: '/perfumes',
+    robots: 'index,follow'
+  },
+  '/health': {
+    title: 'Health & Wellness | Mafleva International Limited',
+    description: 'Find trusted health and wellness essentials for everyday care and support.',
+    canonical: '/health',
+    robots: 'index,follow'
+  },
+  '/gallery': {
+    title: 'Gallery | Mafleva International Limited',
+    description: 'See Mafleva International Limited products and brand imagery across beauty, fashion, fragrances, and wellness.',
+    canonical: '/gallery',
+    robots: 'index,follow'
+  },
+  '/testimonials': {
+    title: 'Customer Testimonials | Mafleva International Limited',
+    description: 'Read customer testimonials and feedback about Mafleva International Limited products and service.',
+    canonical: '/testimonials',
+    robots: 'index,follow'
+  },
+  '/about': {
+    title: 'About Mafleva International Limited',
+    description: 'Learn about Mafleva International Limited and the products, values, and service behind the brand.',
+    canonical: '/about',
+    robots: 'index,follow'
+  },
+  '/contact': {
+    title: 'Contact Mafleva International Limited',
+    description: 'Reach out to Mafleva International Limited for product inquiries, support, and business questions.',
+    canonical: '/contact',
+    robots: 'index,follow'
+  },
+  '/account': {
+    title: 'Account | Mafleva International Limited',
+    description: 'Manage your Mafleva International Limited customer account settings and details.',
+    canonical: '/account',
+    robots: 'noindex,nofollow'
+  },
+  '/cart': {
+    title: 'Cart | Mafleva International Limited',
+    description: 'Review your Mafleva International Limited cart items before checkout.',
+    canonical: '/cart',
+    robots: 'noindex,nofollow'
+  },
+  '/admin': {
+    title: 'Admin Dashboard | Mafleva International Limited',
+    description: 'Administrative dashboard for Mafleva International Limited.',
+    canonical: '/admin',
+    robots: 'noindex,nofollow'
+  }
+};
 
 const FloatingWhatsAppButton = () => (
   <a
@@ -343,46 +433,85 @@ function App() {
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const defaultSeo = useMemo(() => seoDefaults, []);
 
   return (
-    <Router>
-      <div className="App">
-        <Navbar cartCount={cartCount} />
-        <FloatingWhatsAppButton />
-        <main style={{ minHeight: 'calc(100vh - 200px)' }}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<Shop onAddToCart={addToCart} selectedCurrency={selectedCurrency} />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/health" element={<Shop defaultCategory="health" onAddToCart={addToCart} selectedCurrency={selectedCurrency} />} />
-            <Route path="/beauty" element={<Beauty />} />
-            <Route path="/clothing" element={<Clothing />} />
-            <Route path="/perfumes" element={<PerfumeSubCategory />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/testimonials" element={<TestimonialsPage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route
-              path="/cart"
-              element={
-                <CartPage
-                  cart={cart}
-                  subtotal={subtotal}
-                  onRemove={removeFromCart}
-                  onUpdateQuantity={updateQuantity}
-                  selectedCountry={selectedCountry}
-                  selectedCurrency={selectedCurrency}
-                  onCountryChange={setSelectedCountry}
+    <HelmetProvider>
+      <Router>
+        <SEOManager defaultSeo={defaultSeo} />
+        <div className="App">
+          <Navbar cartCount={cartCount} />
+          <FloatingWhatsAppButton />
+          <main style={{ minHeight: 'calc(100vh - 200px)' }}>
+            <Suspense fallback={<RouteLoading />}> 
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/shop" element={<Shop onAddToCart={addToCart} selectedCurrency={selectedCurrency} />} />
+                <Route path="/gallery" element={<Gallery />} />
+                <Route path="/health" element={<Shop defaultCategory="health" onAddToCart={addToCart} selectedCurrency={selectedCurrency} />} />
+                <Route path="/beauty" element={<Beauty />} />
+                <Route path="/clothing" element={<Clothing />} />
+                <Route path="/perfumes" element={<PerfumeSubCategory />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/testimonials" element={<TestimonialsPage />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route
+                  path="/cart"
+                  element={
+                    <CartPage
+                      cart={cart}
+                      subtotal={subtotal}
+                      onRemove={removeFromCart}
+                      onUpdateQuantity={updateQuantity}
+                      selectedCountry={selectedCountry}
+                      selectedCurrency={selectedCurrency}
+                      onCountryChange={setSelectedCountry}
+                    />
+                  }
                 />
-              }
-            />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </Router>
+              </Routes>
+            </Suspense>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </HelmetProvider>
   );
 }
+
+const SEOManager = ({ defaultSeo }) => {
+  const location = useLocation();
+  const pageSeo = seoPages[location.pathname] || {};
+  const mergedSeo = { ...defaultSeo, ...pageSeo };
+  const canonicalUrl = `${window.location.origin}${mergedSeo.canonical || location.pathname}`;
+
+  return (
+    <Helmet>
+      <title>{mergedSeo.title}</title>
+      <meta name="description" content={mergedSeo.description} />
+      <meta name="keywords" content={mergedSeo.keywords} />
+      <meta name="robots" content={mergedSeo.robots} />
+      <link rel="canonical" href={canonicalUrl} />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="Mafleva International Limited" />
+      <meta property="og:title" content={mergedSeo.title} />
+      <meta property="og:description" content={mergedSeo.description} />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:image" content="/images/logo.jpeg" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={mergedSeo.title} />
+      <meta name="twitter:description" content={mergedSeo.description} />
+      <meta name="twitter:image" content="/images/logo.jpeg" />
+    </Helmet>
+  );
+};
+
+const RouteLoading = () => (
+  <div style={{ minHeight: '50vh', display: 'grid', placeItems: 'center', color: '#6c757d', fontWeight: 600 }}>
+    Loading page...
+  </div>
+);
 
 export default App;

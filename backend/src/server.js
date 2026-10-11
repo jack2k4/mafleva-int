@@ -1,14 +1,20 @@
 ﻿const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const helmet = require('helmet');
+const compression = require('compression');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.enable('trust proxy');
+
 // Middleware
 app.use(cors());
+app.use(helmet());
+app.use(compression());
 app.use(express.json());
 
 // ============================================
@@ -298,6 +304,18 @@ app.get('/api/products', (req, res) => {
   });
 });
 
+// GET low stock alerts
+app.get('/api/inventory/alerts', (req, res) => {
+  const threshold = Number(req.query.threshold || 10);
+  const lowStockProducts = products.filter((product) => Number(product.stock || 0) <= threshold);
+
+  res.json({
+    threshold,
+    count: lowStockProducts.length,
+    products: lowStockProducts
+  });
+});
+
 // GET single product
 app.get('/api/products/:id', (req, res) => {
   const product = products.find(p => p.id === parseInt(req.params.id));
@@ -479,6 +497,39 @@ app.get('/api/stats', (req, res) => {
     totalUsers,
     pendingOrders,
     lowStockItems
+  });
+});
+
+app.get('/api/analytics/summary', (req, res) => {
+  const revenueByCategory = products.reduce((accumulator, product) => {
+    const category = product.category || 'uncategorized';
+    const value = Number(product.discountPrice ?? product.price ?? 0) * Number(product.stock ?? 0);
+    accumulator[category] = (accumulator[category] || 0) + value;
+    return accumulator;
+  }, {});
+
+  const lowStockItems = products
+    .filter((product) => Number(product.stock || 0) < 10)
+    .map((product) => ({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      stock: product.stock,
+      status: product.stock === 0 ? 'Out of stock' : 'Low stock'
+    }));
+
+  res.json({
+    totalProducts: products.length,
+    totalOrders: orders.length,
+    totalRevenue: orders.reduce((sum, order) => sum + Number(order.total || 0), 0),
+    totalUsers: users.length,
+    lowStockItems,
+    revenueByCategory,
+    orderStatuses: orders.reduce((accumulator, order) => {
+      const status = order.status || 'Unknown';
+      accumulator[status] = (accumulator[status] || 0) + 1;
+      return accumulator;
+    }, {})
   });
 });
 

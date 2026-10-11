@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
+import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
 function Clothing() {
   const [products, setProducts] = useState([]);
@@ -9,6 +10,7 @@ function Clothing() {
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('default');
+  const clothingSubCategories = ['men', 'women', 'kids'];
 
   const wearImages = [
     '/wear/23626f85d3836f72d6a10dc547adb601.jpg',
@@ -20,18 +22,53 @@ function Clothing() {
   ];
 
   const buildWearFallbackProducts = () => {
-    const bySub = ['men', 'women', 'kids'];
-    return wearImages.map((image, index) => ({
-      id: 'wear-' + (index + 1),
-      name: 'Wear Collection ' + (index + 1),
-      brand: 'Mafleva Wear',
-      price: 49 + (index * 5),
-      rating: 4.4 + (index % 3) * 0.2,
-      numReviews: 18 + index * 4,
-      subCategory: bySub[index % bySub.length],
-      image,
-      sizes: ['S', 'M', 'L']
-    }));
+    const subCategoryNames = {
+      men: "Men's",
+      women: "Women's",
+      kids: "Kids'"
+    };
+
+    return clothingSubCategories.flatMap((subCategory) => (
+      Array.from({ length: 10 }, (_, index) => ({
+        id: `wear-${subCategory}-${index + 1}`,
+        name: `${subCategoryNames[subCategory]} Collection ${index + 1}`,
+        brand: 'Mafleva Wear',
+        price: 49 + index * 3,
+        rating: 4.4 + (index % 3) * 0.2,
+        numReviews: 18 + index * 2,
+        subCategory,
+        image: '',
+        sizes: ['S', 'M', 'L']
+      }))
+    ));
+  };
+
+  const ensureTenPerCategory = (sourceProducts, selectedCategory) => {
+    const fallbackProducts = buildWearFallbackProducts();
+
+    const fillCategory = (subCategory) => {
+      const fromSource = sourceProducts
+        .filter((product) => product?.subCategory === subCategory)
+        .slice(0, 10);
+
+      if (fromSource.length === 10) return fromSource;
+
+      const fillers = fallbackProducts
+        .filter((product) => product.subCategory === subCategory)
+        .slice(0, 10 - fromSource.length)
+        .map((product) => ({
+          ...product,
+          id: `${product.id}-fallback`
+        }));
+
+      return [...fromSource, ...fillers];
+    };
+
+    if (selectedCategory === 'all') {
+      return clothingSubCategories.flatMap(fillCategory);
+    }
+
+    return fillCategory(selectedCategory);
   };
 
   useEffect(() => {
@@ -68,20 +105,15 @@ function Clothing() {
           productsData.sort((a, b) => b.rating - a.rating);
         }
         
-        if (!productsData.length) {
-          productsData = buildWearFallbackProducts();
-          if (activeCategory !== 'all') {
-            productsData = productsData.filter(p => p.subCategory === activeCategory);
-          }
-        }
+        productsData = ensureTenPerCategory(productsData, activeCategory);
 
         setProducts(productsData);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching clothing:', err);
-        const fallback = buildWearFallbackProducts();
-        setProducts(activeCategory === 'all' ? fallback : fallback.filter(p => p.subCategory === activeCategory));
+        const fallback = ensureTenPerCategory([], activeCategory);
+        setProducts(fallback);
         setLoading(false);
       });
   };
@@ -128,8 +160,18 @@ function Clothing() {
     fetchClothing();
   };
 
+  const structuredData = buildCatalogStructuredData({
+    pageTitle: 'Clothing Collection | Mafleva International Limited',
+    pageDescription: 'Shop stylish men, women, and kids clothing from the Mafleva International fashion range.',
+    pagePath: '/clothing',
+    products,
+    currency: 'KES',
+    fallbackDescription: 'Clothing product from Mafleva International Limited.'
+  });
+
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
+      <StructuredData data={structuredData} />
       {/* Page Header */}
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -350,23 +392,19 @@ function Clothing() {
                 </div>
               )}
 
-              {/* Product Image */}
-              <Link to={'/product/' + product.id}>
-                <div style={{
-                  height: '250px',
-                  background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden'
-                }}>
-                  <img
-                    src={getCategoryImage(product, index)}
-                    alt={product.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
-              </Link>
+              {/* Product Image Placeholder */}
+              <div style={{
+                height: '250px',
+                background: '#f8f9fa',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#6c757d',
+                fontWeight: 'bold',
+                letterSpacing: '0.02em'
+              }}>
+                Waiting for products
+              </div>
 
               {/* Product Info */}
               <div style={{ padding: '20px' }}>
