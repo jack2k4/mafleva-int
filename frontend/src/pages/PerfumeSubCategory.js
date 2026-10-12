@@ -3,20 +3,27 @@ import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
-function PerfumeSubCategory() {
+function PerfumeSubCategory({ onAddToCart }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('default');
-
   const perfumeImages = [
     '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg',
     '/perfumes/1f943a1d5fc12debdd2dfc91cf717cf9.jpg',
     '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg',
     '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg',
     '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg'
+  ];
+
+  const perfumeBannerImages = [
+    perfumeImages[3],
+    perfumeImages[0],
+    perfumeImages[2],
+    perfumeImages[4],
+    perfumeImages[1]
   ];
 
   useEffect(() => {
@@ -138,13 +145,70 @@ function PerfumeSubCategory() {
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
       <StructuredData data={structuredData} />
+      <style>{`
+        @keyframes gallerySlide {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
+        }
+      `}</style>
       <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px' }}>
+        <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <img
+            src="/images%201/download.png"
+            alt="Premium perfumes"
+            style={{ width: '52px', height: '52px', borderRadius: '12px', objectFit: 'cover' }}
+          />
           Premium Perfumes
         </h1>
         <p style={{ color: '#6c757d', fontSize: '1.1rem' }}>
           Discover our exquisite collection of fragrances for every personality and occasion
         </p>
+        <div
+          style={{
+            marginTop: '16px',
+            overflow: 'hidden',
+            borderRadius: '16px',
+            border: '1px solid rgba(142, 104, 71, 0.14)',
+            background: 'rgba(255, 255, 255, 0.68)',
+            padding: '10px'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              width: 'max-content',
+              animation: 'gallerySlide 24s linear infinite',
+              willChange: 'transform'
+            }}
+          >
+            {[...perfumeBannerImages, ...perfumeBannerImages].map((image, index) => (
+              <div
+                key={`${image}-${index}`}
+                style={{
+                  flex: '0 0 auto',
+                  width: '130px',
+                  height: index % 2 === 0 ? '165px' : '150px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(142, 104, 71, 0.16)',
+                  boxShadow: '0 8px 18px rgba(58, 41, 29, 0.14)'
+                }}
+              >
+                <img
+                  src={image}
+                  alt="Premium perfume"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Subcategory Cards */}
@@ -404,7 +468,12 @@ function PerfumeSubCategory() {
                     borderRadius: '5px',
                     cursor: 'pointer',
                     fontWeight: 'bold'
-                  }}>
+                  }}
+                  onClick={() => onAddToCart && onAddToCart({
+                    ...product,
+                    category: 'perfumes',
+                    image: getPerfumeImageForProduct(product, index)
+                  })}>
                     <FaShoppingCart /> Add
                   </button>
                 </div>

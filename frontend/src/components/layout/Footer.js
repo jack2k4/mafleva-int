@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 
 const paymentMethods = ['M-Pesa', 'Airtel Money', 'Visa', 'Mastercard', 'PayPal', 'Stripe'];
 const socialLinks = [
-  { name: 'Facebook', url: 'https://facebook.com/maflevainternational', icon: 'f' },
-  { name: 'Instagram', url: 'https://instagram.com/maflevainternational', icon: '◎' },
-  { name: 'TikTok', url: 'https://tiktok.com/@maflevainternational', icon: '♪' },
-  { name: 'Threads', url: 'https://www.threads.net/@maflevainternational', icon: '◌' },
-  { name: 'X', url: 'https://x.com/maflevainternational', icon: 'X' }
+  { name: 'Facebook', url: 'https://www.facebook.com/share/1JC9Kzb4eU/', icon: 'f' },
+  { name: 'Instagram', url: 'https://www.instagram.com/mafleva?psln=Y3p4a2d2OGlpcnIz', icon: '◎' },
+  { name: 'TikTok', url: 'https://www.tiktok.com/@maflevaint?_r=1&_t=ZS-9AUH9ffdiQI', icon: '♪' },
+  { name: 'Threads', url: 'https://www.threads.com/@mafleva', icon: '◌' },
+  { name: 'X', url: 'https://x.com/maflevaint', icon: 'X' }
 ];
 
 const Footer = () => {

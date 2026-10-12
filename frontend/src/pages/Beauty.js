@@ -3,13 +3,237 @@ import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
-function Beauty() {
+function Beauty({ onAddToCart }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('default');
+  const beautySubCategories = ['skincare', 'herbal', 'oils', 'makeup', 'haircare'];
+
+  const beautyBannerImages = [
+    '/images/oils.jpeg',
+    '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg',
+    '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg',
+    '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33.jpeg',
+    '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34.jpeg',
+    '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.35%20(1).jpeg',
+    '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.36.jpeg',
+    '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.38%20(1).jpeg'
+  ];
+
+  const beautyFallbackProducts = [
+    {
+      id: 'beauty-fallback-skincare-1',
+      name: 'Shea Butter Body Lotion',
+      brand: 'Mafleva Beauty',
+      price: 950,
+      rating: 4.8,
+      numReviews: 33,
+      subCategory: 'skincare',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg'
+    },
+    {
+      id: 'beauty-fallback-skincare-2',
+      name: 'Sultan Beard Cream',
+      brand: 'Mafleva Beauty',
+      price: 760,
+      rating: 4.6,
+      numReviews: 21,
+      subCategory: 'skincare',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33.jpeg'
+    },
+    {
+      id: 'beauty-fallback-skincare-3',
+      name: 'Raw Shea Butter Jar',
+      brand: 'Mafleva Beauty',
+      price: 680,
+      rating: 4.7,
+      numReviews: 19,
+      subCategory: 'skincare',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34.jpeg'
+    },
+    {
+      id: 'beauty-fallback-herbal-1',
+      name: 'Herbal Black Seed Soap',
+      brand: 'Mafleva Herbal',
+      price: 540,
+      rating: 4.5,
+      numReviews: 17,
+      subCategory: 'herbal',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20(1).jpeg'
+    },
+    {
+      id: 'beauty-fallback-herbal-2',
+      name: 'Castor Oil Treatment Pack',
+      brand: 'Mafleva Herbal',
+      price: 890,
+      rating: 4.7,
+      numReviews: 24,
+      subCategory: 'herbal',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20(2).jpeg'
+    },
+    {
+      id: 'beauty-fallback-herbal-3',
+      name: 'Hair Mister & Treatment',
+      brand: 'Mafleva Herbal',
+      price: 620,
+      rating: 4.6,
+      numReviews: 14,
+      subCategory: 'herbal',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.38%20(1).jpeg'
+    },
+    {
+      id: 'beauty-fallback-oils-1',
+      name: 'Signature Oils Blend',
+      brand: 'Mafleva Oils',
+      price: 790,
+      rating: 4.8,
+      numReviews: 28,
+      subCategory: 'oils',
+      image: '/images/oils.jpeg'
+    },
+    {
+      id: 'beauty-fallback-oils-2',
+      name: 'Castor Oil Pure',
+      brand: 'Mafleva Oils',
+      price: 840,
+      rating: 4.7,
+      numReviews: 23,
+      subCategory: 'oils',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.36.jpeg'
+    },
+    {
+      id: 'beauty-fallback-makeup-1',
+      name: 'Beauty Essentials Kit',
+      brand: 'Mafleva Beauty',
+      price: 980,
+      rating: 4.4,
+      numReviews: 11,
+      subCategory: 'makeup',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20(2).jpeg'
+    },
+    {
+      id: 'beauty-fallback-makeup-2',
+      name: 'Glow Finish Collection',
+      brand: 'Mafleva Beauty',
+      price: 1100,
+      rating: 4.5,
+      numReviews: 12,
+      subCategory: 'makeup',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg'
+    },
+    {
+      id: 'beauty-fallback-haircare-1',
+      name: 'Hair Meal Shea Butter',
+      brand: 'Mafleva Haircare',
+      price: 730,
+      rating: 4.6,
+      numReviews: 20,
+      subCategory: 'haircare',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20(1).jpeg'
+    },
+    {
+      id: 'beauty-fallback-haircare-2',
+      name: 'Hair Nourish Formula',
+      brand: 'Mafleva Haircare',
+      price: 760,
+      rating: 4.5,
+      numReviews: 18,
+      subCategory: 'haircare',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33%20(1).jpeg'
+    },
+    {
+      id: 'beauty-fallback-haircare-3',
+      name: 'Hair Restore Care',
+      brand: 'Mafleva Haircare',
+      price: 810,
+      rating: 4.7,
+      numReviews: 16,
+      subCategory: 'haircare',
+      image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.35%20(1).jpeg'
+    }
+  ];
+
+  const beautyImagesBySubCategory = {
+    skincare: beautyFallbackProducts.filter((product) => product.subCategory === 'skincare').map((product) => product.image),
+    herbal: beautyFallbackProducts.filter((product) => product.subCategory === 'herbal').map((product) => product.image),
+    oils: beautyFallbackProducts.filter((product) => product.subCategory === 'oils').map((product) => product.image),
+    makeup: beautyFallbackProducts.filter((product) => product.subCategory === 'makeup').map((product) => product.image),
+    haircare: beautyFallbackProducts.filter((product) => product.subCategory === 'haircare').map((product) => product.image)
+  };
+
+  const getBeautyImageForProduct = (product, index) => {
+    if (product?.image) {
+      return product.image;
+    }
+
+    const subCategory = product?.subCategory || 'skincare';
+    const candidates = beautyImagesBySubCategory[subCategory] || beautyBannerImages;
+    return candidates[index % candidates.length] || beautyBannerImages[index % beautyBannerImages.length];
+  };
+
+  const applyFiltersAndSort = (items) => {
+    let productsData = [...items];
+
+    if (priceRange.min) {
+      productsData = productsData.filter((product) => Number(product.price) >= Number(priceRange.min));
+    }
+
+    if (priceRange.max) {
+      productsData = productsData.filter((product) => Number(product.price) <= Number(priceRange.max));
+    }
+
+    if (sortBy === 'price-low') {
+      productsData.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (sortBy === 'price-high') {
+      productsData.sort((a, b) => Number(b.price) - Number(a.price));
+    } else if (sortBy === 'rating') {
+      productsData.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+    }
+
+    return productsData;
+  };
+
+  const ensureBeautyCatalog = (sourceProducts, selectedCategory) => {
+    const normalizedSource = (sourceProducts || []).map((product, index) => ({
+      ...product,
+      id: product?.id || `beauty-live-${selectedCategory}-${index}`,
+      subCategory: product?.subCategory || 'skincare',
+      brand: product?.brand || 'Mafleva Beauty',
+      rating: Number(product?.rating || 4.5),
+      numReviews: Number(product?.numReviews || 12),
+      price: Number(product?.price || 0),
+      image: product?.image || getBeautyImageForProduct(product, index)
+    }));
+
+    const scopedSource = selectedCategory === 'all'
+      ? normalizedSource
+      : normalizedSource.filter((product) => product.subCategory === selectedCategory);
+
+    const scopedFallback = selectedCategory === 'all'
+      ? beautyFallbackProducts
+      : beautyFallbackProducts.filter((product) => product.subCategory === selectedCategory);
+
+    const fallbackRemainder = scopedFallback.filter((fallbackProduct) => (
+      !scopedSource.some((liveProduct) => (
+        liveProduct.id === fallbackProduct.id || liveProduct.image === fallbackProduct.image
+      ))
+    ));
+
+    if (selectedCategory === 'all') {
+      const grouped = beautySubCategories.flatMap((subCategory) => {
+        const live = scopedSource.filter((product) => product.subCategory === subCategory);
+        const fallback = fallbackRemainder.filter((product) => product.subCategory === subCategory);
+        return [...live, ...fallback];
+      });
+
+      return grouped;
+    }
+
+    return [...scopedSource, ...fallbackRemainder];
+  };
 
   useEffect(() => {
     fetchBeauty();
@@ -26,28 +250,15 @@ function Beauty() {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        let productsData = data.products || [];
-        
-        if (priceRange.min) {
-          productsData = productsData.filter(p => p.price >= Number(priceRange.min));
-        }
-        if (priceRange.max) {
-          productsData = productsData.filter(p => p.price <= Number(priceRange.max));
-        }
-        
-        if (sortBy === 'price-low') {
-          productsData.sort((a, b) => a.price - b.price);
-        } else if (sortBy === 'price-high') {
-          productsData.sort((a, b) => b.price - a.price);
-        } else if (sortBy === 'rating') {
-          productsData.sort((a, b) => b.rating - a.rating);
-        }
-        
+        let productsData = ensureBeautyCatalog(data.products || [], activeCategory);
+        productsData = applyFiltersAndSort(productsData);
         setProducts(productsData);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching beauty products:', err);
+        const fallback = applyFiltersAndSort(ensureBeautyCatalog([], activeCategory));
+        setProducts(fallback);
         setLoading(false);
       });
   };
@@ -60,50 +271,6 @@ function Beauty() {
     { id: 'oils', name: 'Oils', icon: '/images/oils.jpeg' },
     { id: 'makeup', name: 'Makeup', icon: '/images 1/ba741899489fc321a99b0860f1d38847.jpg' },
     { id: 'haircare', name: 'Haircare', icon: '/images/WhatsApp Image 2026-08-12 at 18.53.35 (1).jpeg' }
-  ];
-
-  // Subcategory cards for quick navigation (displayed prominently)
-  const subCategoryCards = [
-    { 
-      id: 'herbal', 
-      name: 'Herbal', 
-      icon: '/images/WhatsApp Image 2026-08-12 at 18.53.34.jpeg', 
-      description: 'Natural herbal beauty products', 
-      color: '#00b894',
-      bgColor: '#e8f8f5'
-    },
-    { 
-      id: 'oils', 
-      name: 'Oils', 
-      icon: '/images/oils.jpeg', 
-      description: 'Pure natural oils for skin & hair', 
-      color: '#fdcb6e',
-      bgColor: '#fef9e7'
-    },
-    { 
-      id: 'skincare', 
-      name: 'Skincare', 
-      icon: '/images/WhatsApp Image 2026-08-12 at 18.53.33.jpeg', 
-      description: 'Premium skincare essentials', 
-      color: '#fd79a8',
-      bgColor: '#fdf0f3'
-    },
-    { 
-      id: 'makeup', 
-      name: 'Makeup', 
-      icon: '/images 1/ba741899489fc321a99b0860f1d38847.jpg', 
-      description: 'High-quality makeup products', 
-      color: '#e17055',
-      bgColor: '#fae9e6'
-    },
-    { 
-      id: 'haircare', 
-      name: 'Haircare', 
-      icon: '/images/WhatsApp Image 2026-08-12 at 18.53.35 (1).jpeg', 
-      description: 'Nourishing hair care products', 
-      color: '#0984e3',
-      bgColor: '#e8f4fd'
-    }
   ];
 
   const getCategoryIcon = (product) => {
@@ -149,6 +316,12 @@ function Beauty() {
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
       <StructuredData data={structuredData} />
+      <style>{`
+        @keyframes gallerySlide {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
+        }
+      `}</style>
       {/* Page Header */}
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -162,70 +335,51 @@ function Beauty() {
         <p style={{ color: '#6c757d', fontSize: '1.1rem' }}>
           Discover premium skincare, makeup, haircare, herbal, and oils products
         </p>
-      </div>
-
-      {/* Subcategory Cards - Prominent Display */}
-      <div style={{ marginBottom: '40px' }}>
-        <h3 style={{ color: '#2d3436', marginBottom: '15px' }}>Browse by Category</h3>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '15px'
-        }}>
-          {subCategoryCards.map(card => (
-            <div
-              key={card.id}
-              onClick={() => setActiveCategory(card.id)}
-              style={{
-                background: activeCategory === card.id ? card.color : card.bgColor,
-                padding: '20px',
-                borderRadius: '12px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                border: activeCategory === card.id ? '2px solid ' + card.color : '2px solid transparent',
-                boxShadow: activeCategory === card.id ? '0 4px 15px rgba(0,0,0,0.15)' : 'none',
-                transform: activeCategory === card.id ? 'scale(1.05)' : 'scale(1)'
-              }}
-              onMouseEnter={(e) => {
-                if (activeCategory !== card.id) {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeCategory !== card.id) {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }
-              }}
-            >
-              <div style={{ fontSize: '2.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                {typeof card.icon === 'string' && card.icon.startsWith('/') ? (
-                  <img
-                    src={card.icon}
-                    alt={card.name}
-                    style={{ width: '42px', height: '42px', borderRadius: '12px', objectFit: 'cover' }}
-                  />
-                ) : (
-                  card.icon
-                )}
+        <div
+          style={{
+            marginTop: '16px',
+            overflow: 'hidden',
+            borderRadius: '16px',
+            border: '1px solid rgba(142, 104, 71, 0.14)',
+            background: 'rgba(255, 255, 255, 0.68)',
+            padding: '10px'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              width: 'max-content',
+              animation: 'gallerySlide 25s linear infinite',
+              willChange: 'transform'
+            }}
+          >
+            {[...beautyBannerImages, ...beautyBannerImages].map((image, index) => (
+              <div
+                key={`${image}-${index}`}
+                style={{
+                  flex: '0 0 auto',
+                  width: '130px',
+                  height: index % 2 === 0 ? '165px' : '150px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(142, 104, 71, 0.16)',
+                  boxShadow: '0 8px 18px rgba(58, 41, 29, 0.14)'
+                }}
+              >
+                <img
+                  src={image}
+                  alt="Beauty product"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
               </div>
-              <h4 style={{ 
-                margin: '10px 0 5px 0', 
-                color: activeCategory === card.id ? 'white' : '#2d3436'
-              }}>
-                {card.name}
-              </h4>
-              <p style={{ 
-                fontSize: '0.85rem', 
-                color: activeCategory === card.id ? 'rgba(255,255,255,0.9)' : '#6c757d',
-                margin: 0
-              }}>
-                {card.description}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -403,7 +557,7 @@ function Beauty() {
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '25px'
         }}>
-          {products.map(product => (
+          {products.map((product, index) => (
             <div
               key={product.id}
               style={{
@@ -461,13 +615,18 @@ function Beauty() {
               <Link to={'/product/' + product.id}>
                 <div style={{
                   height: '250px',
-                  background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '5rem'
+                  background: '#f8f9fa'
                 }}>
-                  {getCategoryIcon(product)}
+                  <img
+                    src={getBeautyImageForProduct(product, index)}
+                    alt={product.name}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
                 </div>
               </Link>
 
@@ -547,7 +706,7 @@ function Beauty() {
                           fontWeight: 'bold',
                           color: '#ff6b6b'
                         }}>
-                          
+                          KES {Number(product.discountPrice).toLocaleString()}
                         </span>
                         <span style={{
                           fontSize: '0.9rem',
@@ -555,7 +714,7 @@ function Beauty() {
                           textDecoration: 'line-through',
                           marginLeft: '8px'
                         }}>
-                          
+                          KES {Number(product.price).toLocaleString()}
                         </span>
                       </>
                     ) : (
@@ -564,7 +723,7 @@ function Beauty() {
                         fontWeight: 'bold',
                         color: '#2d3436'
                       }}>
-                        
+                        KES {Number(product.price || 0).toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -590,6 +749,11 @@ function Beauty() {
                       e.currentTarget.style.background = '#ff6b6b';
                       e.currentTarget.style.transform = 'scale(1)';
                     }}
+                    onClick={() => onAddToCart && onAddToCart({
+                      ...product,
+                      category: 'beauty',
+                      image: getBeautyImageForProduct(product, index)
+                    })}
                   >
                     <FaShoppingCart /> Add
                   </button>

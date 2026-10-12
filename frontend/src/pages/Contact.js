@@ -13,7 +13,7 @@ function Contact() {
     {
       label: 'WhatsApp',
       icon: '💬',
-      href: 'https://wa.me/254700123456?text=Hello%20Mafleva%20International%2C%20I%20would%20love%20to%20learn%20more%20about%20your%20products.',
+      href: 'https://wa.me/254772688023?text=Hello%20Mafleva%20International%20Limited',
       color: '#25d366',
       textColor: '#fff'
     },
@@ -27,11 +27,11 @@ function Contact() {
   ];
 
   const socialLinks = [
-    { name: 'Facebook', icon: 'f', url: 'https://facebook.com/maflevainternational', color: '#1877f2' },
-    { name: 'Instagram', icon: '◎', url: 'https://instagram.com/maflevainternational', color: '#e4405f' },
-    { name: 'TikTok', icon: '♪', url: 'https://tiktok.com/@maflevainternational', color: '#000000' },
-    { name: 'Threads', icon: '◌', url: 'https://www.threads.net/@maflevainternational', color: '#111111' },
-    { name: 'X', icon: 'X', url: 'https://x.com/maflevainternational', color: '#1d9bf0' }
+    { name: 'Facebook', icon: 'f', url: 'https://www.facebook.com/share/1JC9Kzb4eU/', color: '#1877f2' },
+    { name: 'Instagram', icon: '◎', url: 'https://www.instagram.com/mafleva?psln=Y3p4a2d2OGlpcnIz', color: '#e4405f' },
+    { name: 'TikTok', icon: '♪', url: 'https://www.tiktok.com/@maflevaint?_r=1&_t=ZS-9AUH9ffdiQI', color: '#000000' },
+    { name: 'Threads', icon: '◌', url: 'https://www.threads.com/@mafleva', color: '#111111' },
+    { name: 'X', icon: 'X', url: 'https://x.com/maflevaint', color: '#1d9bf0' }
   ];
 
   const handleSubmit = (e) => {
@@ -46,7 +46,7 @@ function Contact() {
       const whatsappMessage = encodeURIComponent(
         `Hello Mafleva International, my name is ${formData.name}. Email: ${formData.email}. Message: ${formData.message}`
       );
-      window.open(`https://wa.me/254700123456?text=${whatsappMessage}`, '_blank', 'noopener,noreferrer');
+      window.open(`https://wa.me/254772688023?text=${whatsappMessage}`, '_blank', 'noopener,noreferrer');
     } else {
       window.location.href = `mailto:info@mafleva.com?subject=${subject}&body=${body}`;
     }

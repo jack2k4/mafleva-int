@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
-function Clothing() {
+function Clothing({ onAddToCart }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -19,6 +19,15 @@ function Clothing() {
     '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg',
     '/wear/97d67efc93c9e1ea705a9845ece40b13.jpg',
     '/wear/9a9c7e6e063fe62302f281fbacbccb09.jpg'
+  ];
+
+  const clothingBannerImages = [
+    wearImages[3],
+    wearImages[0],
+    wearImages[5],
+    wearImages[2],
+    wearImages[4],
+    wearImages[1]
   ];
 
   const buildWearFallbackProducts = () => {
@@ -172,6 +181,12 @@ function Clothing() {
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
       <StructuredData data={structuredData} />
+      <style>{`
+        @keyframes gallerySlide {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
+        }
+      `}</style>
       {/* Page Header */}
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ fontSize: '2.5rem', color: '#2d3436', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -185,6 +200,54 @@ function Clothing() {
         <p style={{ color: '#6c757d', fontSize: '1.1rem' }}>
           Discover our premium clothing collection for every style and occasion
         </p>
+      </div>
+
+      <div
+        style={{
+          marginBottom: '30px',
+          overflow: 'hidden',
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, rgba(249, 244, 238, 0.95) 0%, rgba(239, 227, 210, 0.95) 100%)',
+          border: '1px solid rgba(142, 104, 71, 0.08)',
+          boxShadow: '0 10px 30px rgba(58, 41, 29, 0.08)'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            gap: '16px',
+            width: 'max-content',
+            animation: 'gallerySlide 30s linear infinite',
+            willChange: 'transform',
+            padding: '14px'
+          }}
+        >
+          {[...clothingBannerImages, ...clothingBannerImages].map((image, index) => (
+            <div
+              key={`${image}-${index}`}
+              style={{
+                flex: '0 0 auto',
+                width: '200px',
+                height: index % 2 === 0 ? '250px' : '230px',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                border: '1px solid rgba(142, 104, 71, 0.15)',
+                boxShadow: '0 10px 24px rgba(58, 41, 29, 0.12)'
+              }}
+            >
+              <img
+                src={image}
+                alt="Clothing style"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Category Navigation */}
@@ -516,6 +579,11 @@ function Clothing() {
                       e.currentTarget.style.background = '#ff6b6b';
                       e.currentTarget.style.transform = 'scale(1)';
                     }}
+                    onClick={() => onAddToCart && onAddToCart({
+                      ...product,
+                      category: 'clothing',
+                      image: getCategoryImage(product, index)
+                    })}
                   >
                     <FaShoppingCart /> Add
                   </button>

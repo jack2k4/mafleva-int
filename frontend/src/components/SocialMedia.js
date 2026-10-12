@@ -5,37 +5,37 @@ const SocialMedia = () => {
     {
       name: 'Facebook',
       icon: '📘',
-      url: 'https://facebook.com/maflevainternational',
+      url: 'https://www.facebook.com/share/1JC9Kzb4eU/',
       color: '#1877f2'
     },
     {
       name: 'Instagram',
       icon: '📸',
-      url: 'https://instagram.com/maflevainternational',
+      url: 'https://www.instagram.com/mafleva?psln=Y3p4a2d2OGlpcnIz',
       color: '#e4405f'
     },
     {
       name: 'TikTok',
       icon: '🎵',
-      url: 'https://tiktok.com/@maflevainternational',
+      url: 'https://www.tiktok.com/@maflevaint?_r=1&_t=ZS-9AUH9ffdiQI',
       color: '#000000'
     },
     {
-      name: 'Twitter',
-      icon: '🐦',
-      url: 'https://twitter.com/mafleva',
-      color: '#1da1f2'
+      name: 'Threads',
+      icon: '◌',
+      url: 'https://www.threads.com/@mafleva',
+      color: '#111111'
     },
     {
-      name: 'YouTube',
-      icon: '▶️',
-      url: 'https://youtube.com/@maflevainternational',
-      color: '#ff0000'
+      name: 'X',
+      icon: 'X',
+      url: 'https://x.com/maflevaint',
+      color: '#1d9bf0'
     },
     {
       name: 'WhatsApp',
       icon: '💬',
-      url: 'https://wa.me/254700123456',
+      url: 'https://wa.me/254772688023?text=Hello%20Mafleva%20International%20Limited',
       color: '#25d366'
     }
   ];

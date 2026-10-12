@@ -5,12 +5,18 @@ import Testimonials from '../components/common/Testimonials';
 const cream = '#f7f1e7';
 const creamDeep = '#efe3d2';
 const creamCard = '#f9f4ee';
-
 const categories = [
   { name: 'Beauty', icon: '/images%201/ba741899489fc321a99b0860f1d38847.jpg', link: '/beauty', color: '#fd79a8', desc: 'Skincare & Makeup' },
   { name: 'Clothing', icon: '/images%201/clothing.jpg', link: '/clothing', color: '#0984e3', desc: 'Men, Women & Kids' },
   { name: 'Perfumes', icon: '/images%201/download.png', link: '/perfumes', color: '#6c5ce7', desc: 'Branded & Niche' },
   { name: 'Health Products', icon: '🌿', link: '/health', color: '#2ecc71', desc: 'Wellness & Care' }
+];
+
+const categoryMotion = [
+  { rotate: '-2deg', translateY: '10px' },
+  { rotate: '1.5deg', translateY: '0px' },
+  { rotate: '-1deg', translateY: '16px' },
+  { rotate: '2deg', translateY: '6px' }
 ];
 
 const featureCollections = [
@@ -19,7 +25,7 @@ const featureCollections = [
     description: 'Discover premium skincare, makeup, and haircare products',
     image: '/images%201/ba741899489fc321a99b0860f1d38847.jpg',
     button: 'Shop Beauty →',
-    link: '/shop?category=beauty',
+    link: '/beauty',
     highlight: '#8d6d4e'
   },
   {
@@ -49,17 +55,63 @@ const featureCollections = [
 ];
 
 const galleryItems = [
-  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg' },
-  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg' },
-  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33.jpeg' },
-  { type: 'image', src: '/images%201/clothing.jpg' },
-  { type: 'image', src: '/images%201/download.png' },
+  { type: 'image', src: '/accesories/download.png' },
+  { type: 'image', src: '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg' },
+  { type: 'image', src: '/wear/23626f85d3836f72d6a10dc547adb601.jpg' },
   { type: 'image', src: '/images/logo.jpeg' },
+  { type: 'image', src: '/accesories/6db323804a9f4645979497746c845ef4.jpg' },
+  { type: 'image', src: '/images/oils.jpeg' },
+  { type: 'image', src: '/perfumes/1f943a1d5fc12debdd2dfc91cf717cf9.jpg' },
+  { type: 'image', src: '/wear/45591080c617ba19d510476947307a2e.jpg' },
   { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg' },
-  { type: 'image', src: '/images%201/clothing.jpg' },
+  { type: 'image', src: '/accesories/8a92eec6a8186163482425f70ed9d613.jpg' },
+  { type: 'image', src: '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg' },
+  { type: 'image', src: '/wear/62a50cc5b187807962bc6d67691c97d8.jpg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20(1).jpeg' },
+  { type: 'image', src: '/accesories/ca720f38098d7d171e41e23814096d6a.jpg' },
+  { type: 'image', src: '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg' },
+  { type: 'image', src: '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20(2).jpeg' },
+  { type: 'image', src: '/accesories/feb8532a0255bb57747e9f2711315f89.jpg' },
+  { type: 'image', src: '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg' },
+  { type: 'image', src: '/wear/97d67efc93c9e1ea705a9845ece40b13.jpg' },
   { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg' },
-  { type: 'image', src: '/images%201/download.png' }
+  { type: 'image', src: '/wear/9a9c7e6e063fe62302f281fbacbccb09.jpg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33%20(1).jpeg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33.jpeg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20(1).jpeg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20(2).jpeg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34.jpeg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.35%20(1).jpeg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.36.jpeg' },
+  { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.38%20(1).jpeg' }
 ].filter((item) => Boolean(item.src));
+
+const clothingLoopImages = [
+  '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg',
+  '/wear/23626f85d3836f72d6a10dc547adb601.jpg',
+  '/wear/9a9c7e6e063fe62302f281fbacbccb09.jpg',
+  '/wear/62a50cc5b187807962bc6d67691c97d8.jpg',
+  '/wear/97d67efc93c9e1ea705a9845ece40b13.jpg',
+  '/wear/45591080c617ba19d510476947307a2e.jpg'
+];
+
+const perfumeLoopImages = [
+  '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg',
+  '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg',
+  '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg',
+  '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg',
+  '/perfumes/1f943a1d5fc12debdd2dfc91cf717cf9.jpg'
+];
+
+const beautyLoopImages = [
+  '/images/oils.jpeg',
+  '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg',
+  '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg',
+  '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33.jpeg',
+  '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34.jpeg',
+  '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.36.jpeg'
+];
 
 function Home() {
   return (
@@ -149,7 +201,7 @@ function Home() {
               margin: '0 auto'
             }}
           />
-          <Link to="/shop" style={{ display: 'inline-block', marginTop: '8px' }}>
+          <a href="#main-shopping-options" style={{ display: 'inline-block', marginTop: '8px' }}>
             <button
               style={{
                 padding: '14px 36px',
@@ -165,72 +217,98 @@ function Home() {
             >
               SHOP NOW
             </button>
-          </Link>
+          </a>
         </div>
 
-        <div style={{ marginTop: '50px' }}>
+        <div id="main-shopping-options" style={{ marginTop: '50px' }}>
         <h2 style={{ textAlign: 'center', color: '#2d3436', marginBottom: '30px' }}>
           Shop by Category
         </h2>
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '20px'
+            overflow: 'hidden',
+            borderRadius: '20px',
+            background: 'linear-gradient(135deg, rgba(249, 244, 238, 0.95) 0%, rgba(247, 241, 231, 0.92) 100%)',
+            boxShadow: '0 10px 30px rgba(58, 41, 29, 0.08)',
+            border: '1px solid rgba(142, 104, 71, 0.08)'
           }}
         >
-          {categories.map((category) => (
-            <Link key={category.name} to={category.link} style={{ textDecoration: 'none' }}>
-              <div
-                style={{
-                  background: '#f9f4ee',
-                  padding: '30px',
-                  textAlign: 'center',
-                  borderRadius: '10px',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                  transition: 'transform 0.3s ease',
-                  borderBottom: '4px solid ' + category.color,
-                  border: '1px solid rgba(142, 104, 71, 0.08)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = '0 5px 20px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-                }}
-              >
-                <div
+          <div
+            style={{
+              display: 'flex',
+              gap: '20px',
+              width: 'max-content',
+              animation: 'gallerySlide 24s linear infinite',
+              willChange: 'transform',
+              padding: '24px 16px 30px'
+            }}
+          >
+            {[...categories, ...categories].map((category, index) => {
+              const motion = categoryMotion[index % categoryMotion.length];
+
+              return (
+                <Link
+                  key={`${category.name}-${index}`}
+                  to={category.link}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '90px'
+                    textDecoration: 'none',
+                    flex: '0 0 230px',
+                    transform: `translateY(${motion.translateY}) rotate(${motion.rotate})`
                   }}
                 >
-                  {category.icon.startsWith('/') ? (
-                    <img
-                      src={category.icon}
-                      alt={category.name}
+                  <div
+                    style={{
+                      background: '#f9f4ee',
+                      padding: '30px',
+                      textAlign: 'center',
+                      borderRadius: '18px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                      borderBottom: '4px solid ' + category.color,
+                      border: '1px solid rgba(142, 104, 71, 0.08)',
+                      minHeight: '250px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-5px)';
+                      e.currentTarget.style.boxShadow = '0 5px 20px rgba(0,0,0,0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                    }}
+                  >
+                    <div
                       style={{
-                        width: '100%',
-                        maxWidth: '130px',
-                        height: '100%',
-                        maxHeight: '110px',
-                        objectFit: 'contain',
-                        borderRadius: '12px'
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: '90px'
                       }}
-                    />
-                  ) : (
-                    <div style={{ fontSize: '3rem' }}>{category.icon}</div>
-                  )}
-                </div>
-                <h3 style={{ color: '#2d3436', marginTop: '10px' }}>{category.name}</h3>
-                <p style={{ color: '#6c757d', fontSize: '0.9rem' }}>{category.desc}</p>
-              </div>
-            </Link>
-          ))}
+                    >
+                      {category.icon.startsWith('/') ? (
+                        <img
+                          src={category.icon}
+                          alt={category.name}
+                          style={{
+                            width: '100%',
+                            maxWidth: '130px',
+                            height: '100%',
+                            maxHeight: '110px',
+                            objectFit: 'contain',
+                            borderRadius: '12px'
+                          }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '3rem' }}>{category.icon}</div>
+                      )}
+                    </div>
+                    <h3 style={{ color: '#2d3436', marginTop: '10px' }}>{category.name}</h3>
+                    <p style={{ color: '#6c757d', fontSize: '0.9rem' }}>{category.desc}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -268,19 +346,165 @@ function Home() {
               }}
             />
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <img
-                src={collection.image}
-                alt={collection.title}
-                style={{
-                  display: 'block',
-                  width: '180px',
-                  maxWidth: '55%',
-                  height: 'auto',
-                  margin: '0 auto 18px',
-                  borderRadius: '16px',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.08)'
-                }}
-              />
+              {collection.link === '/shop?category=beauty' ? (
+                <div
+                  style={{
+                    overflow: 'hidden',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(142, 104, 71, 0.14)',
+                    background: 'rgba(255, 255, 255, 0.55)',
+                    padding: '10px',
+                    margin: '0 auto 18px',
+                    maxWidth: '1000px'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '12px',
+                      width: 'max-content',
+                      animation: 'gallerySlide 25s linear infinite',
+                      willChange: 'transform'
+                    }}
+                  >
+                    {[...beautyLoopImages, ...beautyLoopImages].map((image, index) => (
+                      <div
+                        key={`${image}-${index}`}
+                        style={{
+                          flex: '0 0 auto',
+                          width: '130px',
+                          height: index % 2 === 0 ? '165px' : '150px',
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(142, 104, 71, 0.16)',
+                          boxShadow: '0 8px 18px rgba(58, 41, 29, 0.14)'
+                        }}
+                      >
+                        <img
+                          src={image}
+                          alt="Beauty style"
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : collection.link === '/clothing' ? (
+                <div
+                  style={{
+                    overflow: 'hidden',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(142, 104, 71, 0.14)',
+                    background: 'rgba(255, 255, 255, 0.55)',
+                    padding: '10px',
+                    margin: '0 auto 18px',
+                    maxWidth: '1000px'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '12px',
+                      width: 'max-content',
+                      animation: 'gallerySlide 26s linear infinite',
+                      willChange: 'transform'
+                    }}
+                  >
+                    {[...clothingLoopImages, ...clothingLoopImages].map((image, index) => (
+                      <div
+                        key={`${image}-${index}`}
+                        style={{
+                          flex: '0 0 auto',
+                          width: '130px',
+                          height: index % 2 === 0 ? '165px' : '150px',
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(142, 104, 71, 0.16)',
+                          boxShadow: '0 8px 18px rgba(58, 41, 29, 0.14)'
+                        }}
+                      >
+                        <img
+                          src={image}
+                          alt="Clothing style"
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : collection.link === '/perfumes' ? (
+                <div
+                  style={{
+                    overflow: 'hidden',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(142, 104, 71, 0.14)',
+                    background: 'rgba(255, 255, 255, 0.55)',
+                    padding: '10px',
+                    margin: '0 auto 18px',
+                    maxWidth: '1000px'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '12px',
+                      width: 'max-content',
+                      animation: 'gallerySlide 24s linear infinite',
+                      willChange: 'transform'
+                    }}
+                  >
+                    {[...perfumeLoopImages, ...perfumeLoopImages].map((image, index) => (
+                      <div
+                        key={`${image}-${index}`}
+                        style={{
+                          flex: '0 0 auto',
+                          width: '130px',
+                          height: index % 2 === 0 ? '165px' : '150px',
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(142, 104, 71, 0.16)',
+                          boxShadow: '0 8px 18px rgba(58, 41, 29, 0.14)'
+                        }}
+                      >
+                        <img
+                          src={image}
+                          alt="Perfume style"
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <img
+                  src={collection.image}
+                  alt={collection.title}
+                  style={{
+                    display: 'block',
+                    width: '180px',
+                    maxWidth: '55%',
+                    height: 'auto',
+                    margin: '0 auto 18px',
+                    borderRadius: '16px',
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.08)'
+                  }}
+                />
+              )}
               <h2 style={{ fontSize: '2rem', margin: '0 0 12px' }}>{collection.title}</h2>
               <p style={{ fontSize: '1.1rem', opacity: 0.9, margin: '0 0 18px' }}>{collection.description}</p>
               <button

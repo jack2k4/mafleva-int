@@ -1,14 +1,41 @@
 import React, { useMemo, useState } from 'react';
 
 const allProducts = [
-  { title: 'Glow Serum', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg', accent: '#f8d6dd', type: 'image' },
-  { title: 'Luxury Finish', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg', accent: '#d8d4ff', type: 'image' },
-  { title: 'Soft Care', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33.jpeg', accent: '#d9f3d9', type: 'image' },
-  { title: 'Silk Collection', category: 'Clothing', src: '/images%201/clothing.jpg', accent: '#cfe8ff', type: 'image' },
-  { title: 'Luxury Fragrance', category: 'Perfumes', src: '/images%201/download.png', accent: '#f5e3c5', type: 'image' },
-  { title: 'Signature Oils', category: 'Wellness', src: '/videos/king%20of%20oils.mp4', accent: '#e3f5d9', type: 'video' },
-  { title: 'Beauty Essentials', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg', accent: '#fbe4d1', type: 'image' },
-  { title: 'Premium Fashion', category: 'Clothing', src: '/videos/king%20of%20oils.mp4', accent: '#dfeaff', type: 'video' }
+  { title: 'Accessories Highlight', category: 'Accessories', src: '/accesories/download.png', accent: '#f5e3c5', type: 'image' },
+  { title: 'Perfume Focus', category: 'Perfumes', src: '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg', accent: '#dfeaff', type: 'image' },
+  { title: 'Wear Signature', category: 'Wear', src: '/wear/23626f85d3836f72d6a10dc547adb601.jpg', accent: '#f8d6dd', type: 'image' },
+  { title: 'Brand Mark', category: 'Beauty', src: '/images/logo.jpeg', accent: '#fbe4d1', type: 'image' },
+  { title: 'Accessories Premium', category: 'Accessories', src: '/accesories/6db323804a9f4645979497746c845ef4.jpg', accent: '#d9f3d9', type: 'image' },
+  { title: 'Natural Oils', category: 'Beauty', src: '/images/oils.jpeg', accent: '#e3f5d9', type: 'image' },
+  { title: 'Fragrance Noir', category: 'Perfumes', src: '/perfumes/1f943a1d5fc12debdd2dfc91cf717cf9.jpg', accent: '#d8d4ff', type: 'image' },
+  { title: 'Wear Classics', category: 'Wear', src: '/wear/45591080c617ba19d510476947307a2e.jpg', accent: '#cfe8ff', type: 'image' },
+  { title: 'Beauty Glow', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg', accent: '#f8d6dd', type: 'image' },
+  { title: 'Accessories Detail', category: 'Accessories', src: '/accesories/8a92eec6a8186163482425f70ed9d613.jpg', accent: '#f5e3c5', type: 'image' },
+  { title: 'Fragrance Bronze', category: 'Perfumes', src: '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg', accent: '#fbe4d1', type: 'image' },
+  { title: 'Wear Motion', category: 'Wear', src: '/wear/62a50cc5b187807962bc6d67691c97d8.jpg', accent: '#dfeaff', type: 'image' },
+  { title: 'Beauty Finish', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20%281%29.jpeg', accent: '#d8d4ff', type: 'image' },
+  { title: 'Accessories Luxe', category: 'Accessories', src: '/accesories/ca720f38098d7d171e41e23814096d6a.jpg', accent: '#f8d6dd', type: 'image' },
+  { title: 'Fragrance Elixir', category: 'Perfumes', src: '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg', accent: '#cfe8ff', type: 'image' },
+  { title: 'Wear Atelier', category: 'Wear', src: '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg', accent: '#d9f3d9', type: 'image' },
+  { title: 'Beauty Essentials', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20%282%29.jpeg', accent: '#fbe4d1', type: 'image' },
+  { title: 'Accessories Core', category: 'Accessories', src: '/accesories/feb8532a0255bb57747e9f2711315f89.jpg', accent: '#e3f5d9', type: 'image' },
+  { title: 'Fragrance Gold', category: 'Perfumes', src: '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg', accent: '#f5e3c5', type: 'image' },
+  { title: 'Wear Studio', category: 'Wear', src: '/wear/97d67efc93c9e1ea705a9845ece40b13.jpg', accent: '#d8d4ff', type: 'image' },
+  { title: 'Beauty Care', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg', accent: '#dfeaff', type: 'image' },
+  { title: 'Wear Refined', category: 'Wear', src: '/wear/9a9c7e6e063fe62302f281fbacbccb09.jpg', accent: '#f8d6dd', type: 'image' },
+  { title: 'Beauty Texture', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33%20%281%29.jpeg', accent: '#cfe8ff', type: 'image' },
+  { title: 'Beauty Soft Care', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33.jpeg', accent: '#d9f3d9', type: 'image' },
+  { title: 'Beauty Herbal', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20%281%29.jpeg', accent: '#e3f5d9', type: 'image' },
+  { title: 'Beauty Ritual', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20%282%29.jpeg', accent: '#fbe4d1', type: 'image' },
+  { title: 'Beauty Botanics', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34.jpeg', accent: '#d8d4ff', type: 'image' },
+  { title: 'Beauty Haircare', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.35%20%281%29.jpeg', accent: '#f5e3c5', type: 'image' },
+  { title: 'Beauty Daily Care', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.36.jpeg', accent: '#f8d6dd', type: 'image' },
+  { title: 'Beauty Signature', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.38%20%281%29.jpeg', accent: '#cfe8ff', type: 'image' }
+];
+
+const videoItems = [
+  { title: 'Signature Oils', category: 'Wellness', src: '/videos/king%20of%20oils.mp4', type: 'video' },
+  { title: 'Premium Fashion', category: 'Clothing', src: '/videos/king%20of%20oils.mp4', type: 'video' }
 ];
 
 function Gallery() {
@@ -117,7 +144,7 @@ function Gallery() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px' }}>
-        {allProducts.filter((item) => item.type === 'video').map((item) => (
+        {videoItems.map((item) => (
           <button
             key={`${item.title}-${item.category}`}
             type="button"

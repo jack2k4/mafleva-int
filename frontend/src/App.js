@@ -11,6 +11,7 @@ const Gallery = lazy(() => import('./pages/Gallery'));
 const Beauty = lazy(() => import('./pages/Beauty'));
 const Clothing = lazy(() => import('./pages/Clothing'));
 const PerfumeSubCategory = lazy(() => import('./pages/PerfumeSubCategory'));
+const Health = lazy(() => import('./pages/Health'));
 const About = lazy(() => import('./pages/About'));
 const Account = lazy(() => import('./pages/Account'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -123,11 +124,11 @@ const Navbar = ({ cartCount = 0 }) => {
 
 const paymentMethods = ['M-Pesa', 'Airtel Money', 'Visa', 'Mastercard', 'PayPal', 'Stripe'];
 const socialLinks = [
-  { name: 'Facebook', url: 'https://facebook.com/maflevainternational', icon: 'f' },
-  { name: 'Instagram', url: 'https://instagram.com/maflevainternational', icon: '◎' },
-  { name: 'TikTok', url: 'https://tiktok.com/@maflevainternational', icon: '♪' },
-  { name: 'Threads', url: 'https://www.threads.net/@maflevainternational', icon: '◌' },
-  { name: 'X', url: 'https://x.com/maflevainternational', icon: 'X' }
+  { name: 'Facebook', url: 'https://www.facebook.com/share/1JC9Kzb4eU/', icon: 'f' },
+  { name: 'Instagram', url: 'https://www.instagram.com/mafleva?psln=Y3p4a2d2OGlpcnIz', icon: '◎' },
+  { name: 'TikTok', url: 'https://www.tiktok.com/@maflevaint?_r=1&_t=ZS-9AUH9ffdiQI', icon: '♪' },
+  { name: 'Threads', url: 'https://www.threads.com/@mafleva', icon: '◌' },
+  { name: 'X', url: 'https://x.com/maflevaint', icon: 'X' }
 ];
 
 const seoDefaults = {
@@ -221,7 +222,7 @@ const seoPages = {
 
 const FloatingWhatsAppButton = () => (
   <a
-    href="https://wa.me/254700123456?text=Hello%20Mafleva%20International%2C%20I%20would%20like%20to%20learn%20more%20about%20your%20products."
+    href="https://wa.me/254772688023?text=Hello%20Mafleva%20International%20Limited"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Chat on WhatsApp"
@@ -448,10 +449,10 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop onAddToCart={addToCart} selectedCurrency={selectedCurrency} />} />
                 <Route path="/gallery" element={<Gallery />} />
-                <Route path="/health" element={<Shop defaultCategory="health" onAddToCart={addToCart} selectedCurrency={selectedCurrency} />} />
-                <Route path="/beauty" element={<Beauty />} />
-                <Route path="/clothing" element={<Clothing />} />
-                <Route path="/perfumes" element={<PerfumeSubCategory />} />
+                <Route path="/health" element={<Health onAddToCart={addToCart} />} />
+                <Route path="/beauty" element={<Beauty onAddToCart={addToCart} />} />
+                <Route path="/clothing" element={<Clothing onAddToCart={addToCart} />} />
+                <Route path="/perfumes" element={<PerfumeSubCategory onAddToCart={addToCart} />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/account" element={<Account />} />
                 <Route path="/contact" element={<Contact />} />
