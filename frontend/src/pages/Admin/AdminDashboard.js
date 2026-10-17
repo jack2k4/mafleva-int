@@ -14,6 +14,7 @@ function AdminDashboard() {
   const [dashboardError, setDashboardError] = useState('');
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [productActionStatus, setProductActionStatus] = useState('');
+  const [galleryStatus, setGalleryStatus] = useState('');
 
   const [products, setProducts] = useState([
     { id: 1, name: 'Glow Bloom Face Cream', category: 'beauty', price: 45, stock: 30, image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg' },
@@ -35,6 +36,21 @@ function AdminDashboard() {
 
   const [promoVideo, setPromoVideo] = useState('/videos/Luxury%20Kandura%20Collection.mhtml');
   const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [galleryItems, setGalleryItems] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('mafleva_gallery_items') || '[]');
+      return Array.isArray(stored) ? stored : [];
+    } catch (error) {
+      return [];
+    }
+  });
+  const [galleryForm, setGalleryForm] = useState({
+    title: '',
+    category: 'Beauty',
+    type: 'image',
+    src: '',
+    accent: '#fbe4d1'
+  });
 
   const defaultSubCategoryMap = {
     beauty: 'skincare',
@@ -381,6 +397,48 @@ function AdminDashboard() {
     setNewVideoUrl('');
   };
 
+  const persistGalleryItems = (items) => {
+    localStorage.setItem('mafleva_gallery_items', JSON.stringify(items));
+    window.dispatchEvent(new Event('mafleva-gallery-updated'));
+  };
+
+  const addGalleryItem = (e) => {
+    e.preventDefault();
+    const title = galleryForm.title.trim();
+    const src = galleryForm.src.trim();
+    if (!title || !src) {
+      setGalleryStatus('Provide title and media URL/path.');
+      return;
+    }
+
+    const nextItem = {
+      id: Date.now(),
+      title,
+      category: galleryForm.category.trim() || 'Beauty',
+      type: galleryForm.type === 'video' ? 'video' : 'image',
+      src,
+      accent: galleryForm.accent || '#fbe4d1'
+    };
+
+    setGalleryItems((current) => {
+      const next = [...current, nextItem];
+      persistGalleryItems(next);
+      return next;
+    });
+
+    setGalleryForm({ title: '', category: 'Beauty', type: 'image', src: '', accent: '#fbe4d1' });
+    setGalleryStatus('Gallery item added.');
+  };
+
+  const removeGalleryItem = (id) => {
+    setGalleryItems((current) => {
+      const next = current.filter((item) => String(item.id) !== String(id));
+      persistGalleryItems(next);
+      return next;
+    });
+    setGalleryStatus('Gallery item removed.');
+  };
+
   if (!isLoggedIn) {
     return (
       <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf7f2', padding: '20px' }}>
@@ -452,6 +510,7 @@ function AdminDashboard() {
             ['orders', 'Orders'],
             ['messages', 'Messages'],
             ['reports', 'Reports'],
+            ['gallery', 'Gallery'],
             ['video', 'Promo Video']
           ].map(([id, label]) => (
             <button
@@ -639,6 +698,75 @@ function AdminDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'gallery' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+            <div style={panelStyle}>
+              <h3>Gallery Manager</h3>
+              <form onSubmit={addGalleryItem}>
+                <input
+                  placeholder="Title"
+                  value={galleryForm.title}
+                  onChange={(e) => setGalleryForm((prev) => ({ ...prev, title: e.target.value }))}
+                  style={inputStyle}
+                  required
+                />
+                <input
+                  placeholder="Category (Beauty, Wear, Perfumes...)"
+                  value={galleryForm.category}
+                  onChange={(e) => setGalleryForm((prev) => ({ ...prev, category: e.target.value }))}
+                  style={inputStyle}
+                  required
+                />
+                <select
+                  value={galleryForm.type}
+                  onChange={(e) => setGalleryForm((prev) => ({ ...prev, type: e.target.value }))}
+                  style={inputStyle}
+                >
+                  <option value="image">Image</option>
+                  <option value="video">Video</option>
+                </select>
+                <input
+                  placeholder="Media path or URL"
+                  value={galleryForm.src}
+                  onChange={(e) => setGalleryForm((prev) => ({ ...prev, src: e.target.value }))}
+                  style={inputStyle}
+                  required
+                />
+                {galleryForm.type === 'image' && (
+                  <input
+                    type="color"
+                    value={galleryForm.accent}
+                    onChange={(e) => setGalleryForm((prev) => ({ ...prev, accent: e.target.value }))}
+                    style={{ ...inputStyle, height: '44px', padding: '6px' }}
+                  />
+                )}
+                <button type="submit" style={primaryBtn}>Add Gallery Item</button>
+              </form>
+
+              {galleryStatus && (
+                <div style={{ marginTop: '10px', color: '#2d3436', fontWeight: 600 }}>{galleryStatus}</div>
+              )}
+            </div>
+
+            <div style={panelStyle}>
+              <h3>Custom Gallery Items</h3>
+              {galleryItems.length === 0 ? (
+                <p style={{ color: '#6c757d', margin: 0 }}>No custom gallery items yet.</p>
+              ) : (
+                galleryItems.map((item) => (
+                  <div key={item.id} style={rowCard}>
+                    <div>
+                      <strong>{item.title}</strong>
+                      <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>{item.category} • {item.type}</div>
+                    </div>
+                    <button type="button" onClick={() => removeGalleryItem(item.id)} style={smallBtn('#e17055')}>Remove</button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 

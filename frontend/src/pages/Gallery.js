@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 const allProducts = [
   { title: 'Accessories Highlight', category: 'Accessories', src: '/accesories/download.png', accent: '#f5e3c5', type: 'image' },
@@ -40,11 +40,34 @@ const videoItems = [
 
 function Gallery() {
   const [selectedItem, setSelectedItem] = useState(null);
+  const [customGalleryItems, setCustomGalleryItems] = useState([]);
+
+  useEffect(() => {
+    const loadCustomGalleryItems = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('mafleva_gallery_items') || '[]');
+        setCustomGalleryItems(Array.isArray(stored) ? stored : []);
+      } catch (error) {
+        setCustomGalleryItems([]);
+      }
+    };
+
+    loadCustomGalleryItems();
+    window.addEventListener('mafleva-gallery-updated', loadCustomGalleryItems);
+    return () => window.removeEventListener('mafleva-gallery-updated', loadCustomGalleryItems);
+  }, []);
 
   const marqueeItems = useMemo(() => {
-    const shuffled = [...allProducts].sort(() => Math.random() - 0.5);
+    const sourceItems = customGalleryItems.length > 0 ? customGalleryItems : allProducts;
+    const shuffled = [...sourceItems].sort(() => Math.random() - 0.5);
     return [...shuffled, ...shuffled];
-  }, []);
+  }, [customGalleryItems]);
+
+  const galleryVideos = useMemo(() => {
+    if (customGalleryItems.length === 0) return videoItems;
+    const items = customGalleryItems.filter((item) => item.type === 'video');
+    return items.length > 0 ? items : videoItems;
+  }, [customGalleryItems]);
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 20px 60px' }}>
@@ -144,7 +167,7 @@ function Gallery() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px' }}>
-        {videoItems.map((item) => (
+        {galleryVideos.map((item) => (
           <button
             key={`${item.title}-${item.category}`}
             type="button"
