@@ -30,59 +30,27 @@ function Clothing({ onAddToCart }) {
     wearImages[1]
   ];
 
-  const buildWearFallbackProducts = () => {
-    const subCategoryNames = {
-      men: "Men's",
-      women: "Women's",
-      kids: "Kids'"
-    };
-
-    return clothingSubCategories.flatMap((subCategory) => (
-      Array.from({ length: 10 }, (_, index) => ({
-        id: `wear-${subCategory}-${index + 1}`,
-        name: `${subCategoryNames[subCategory]} Collection ${index + 1}`,
-        brand: 'Mafleva Wear',
-        price: 49 + index * 3,
-        rating: 4.4 + (index % 3) * 0.2,
-        numReviews: 18 + index * 2,
-        subCategory,
-        image: '',
-        sizes: ['S', 'M', 'L']
-      }))
-    ));
-  };
-
-  const ensureTenPerCategory = (sourceProducts, selectedCategory) => {
-    const fallbackProducts = buildWearFallbackProducts();
-
-    const fillCategory = (subCategory) => {
-      const fromSource = sourceProducts
-        .filter((product) => product?.subCategory === subCategory)
-        .slice(0, 10);
-
-      if (fromSource.length === 10) return fromSource;
-
-      const fillers = fallbackProducts
-        .filter((product) => product.subCategory === subCategory)
-        .slice(0, 10 - fromSource.length)
-        .map((product) => ({
-          ...product,
-          id: `${product.id}-fallback`
-        }));
-
-      return [...fromSource, ...fillers];
-    };
-
-    if (selectedCategory === 'all') {
-      return clothingSubCategories.flatMap(fillCategory);
+  const filterProductsByCategory = (sourceProducts, selectedCategory) => {
+    if (!Array.isArray(sourceProducts) || sourceProducts.length === 0) {
+      return [];
     }
 
-    return fillCategory(selectedCategory);
+    if (selectedCategory === 'all') {
+      return sourceProducts.filter(Boolean);
+    }
+
+    return sourceProducts.filter(
+      (product) => String(product?.subCategory || '').toLowerCase() === selectedCategory
+    );
   };
 
   useEffect(() => {
     fetchClothing();
-  }, [activeCategory]);
+
+    const handleProductUpdate = () => fetchClothing();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
+  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
 
   const fetchClothing = () => {
     setLoading(true);
@@ -95,33 +63,45 @@ function Clothing({ onAddToCart }) {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        let productsData = data.products || [];
-        
+        const storedProducts = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+        let productsData = Array.isArray(data?.products) && data.products.length > 0
+          ? data.products
+          : storedProducts.filter((product) => String(product?.category || '').toLowerCase() === 'clothing');
+
+        if (activeCategory !== 'all') {
+          productsData = productsData.filter((product) => String(product?.subCategory || '').toLowerCase() === activeCategory);
+        }
+
         // Apply price filter
         if (priceRange.min) {
-          productsData = productsData.filter(p => p.price >= Number(priceRange.min));
+          productsData = productsData.filter(p => Number(p.price) >= Number(priceRange.min));
         }
         if (priceRange.max) {
-          productsData = productsData.filter(p => p.price <= Number(priceRange.max));
+          productsData = productsData.filter(p => Number(p.price) <= Number(priceRange.max));
         }
-        
+
         // Apply sorting
         if (sortBy === 'price-low') {
-          productsData.sort((a, b) => a.price - b.price);
+          productsData.sort((a, b) => Number(a.price) - Number(b.price));
         } else if (sortBy === 'price-high') {
-          productsData.sort((a, b) => b.price - a.price);
+          productsData.sort((a, b) => Number(b.price) - Number(a.price));
         } else if (sortBy === 'rating') {
-          productsData.sort((a, b) => b.rating - a.rating);
+          productsData.sort((a, b) => Number(b.rating) - Number(a.rating));
         }
-        
-        productsData = ensureTenPerCategory(productsData, activeCategory);
+
+        productsData = productsData.filter((product) => Number(product?.stock ?? 1) > 0);
+        productsData = filterProductsByCategory(productsData, activeCategory);
 
         setProducts(productsData);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching clothing:', err);
-        const fallback = ensureTenPerCategory([], activeCategory);
+        const storedProducts = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+        const fallback = filterProductsByCategory(
+          storedProducts.filter((product) => String(product?.category || '').toLowerCase() === 'clothing'),
+          activeCategory
+        );
         setProducts(fallback);
         setLoading(false);
       });
@@ -139,6 +119,17 @@ function Clothing({ onAddToCart }) {
       return product.image;
     }
 
+    const productImages = Array.isArray(product?.images)
+      ? product.images.map((img) => img?.url || '').filter(Boolean)
+      : [];
+
+    if (productImages.length > 0) {
+      return productImages[0];
+    }
+
+    const productKey = String(product?.id ?? product?.name ?? index);
+    const fallbackIndex = Array.from(productKey).reduce((sum, character) => sum + character.charCodeAt(0), 0) % wearImages.length;
+
     const bySubCategory = {
       men: wearImages[1],
       women: wearImages[2],
@@ -146,7 +137,7 @@ function Clothing({ onAddToCart }) {
       all: wearImages[0]
     };
 
-    return bySubCategory[product?.subCategory] || wearImages[(Number(product?.id || index) + 1) % wearImages.length];
+    return bySubCategory[product?.subCategory] || wearImages[fallbackIndex];
   };
 
   const renderStars = (rating) => {
@@ -417,7 +408,9 @@ function Clothing({ onAddToCart }) {
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '25px'
         }}>
-          {products.map((product, index) => (
+          {products.map((product, index) => {
+            const productStock = Number(product?.stock ?? 1);
+            return (
             <div
               key={product.id}
               style={{
@@ -455,18 +448,28 @@ function Clothing({ onAddToCart }) {
                 </div>
               )}
 
-              {/* Product Image Placeholder */}
+              {/* Product Image */}
               <div style={{
                 height: '250px',
-                background: '#f8f9fa',
+                background: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#6c757d',
-                fontWeight: 'bold',
-                letterSpacing: '0.02em'
+                overflow: 'hidden'
               }}>
-                Waiting for products
+                <img
+                  src={getCategoryImage(product, index)}
+                  alt={product.name}
+                  onError={(event) => {
+                    event.currentTarget.src = getCategoryImage(product, index);
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
               </div>
 
               {/* Product Info */}
@@ -522,6 +525,9 @@ function Clothing({ onAddToCart }) {
                   </div>
                 )}
 
+                <div style={{ marginBottom: '10px', color: '#2d3436', fontWeight: 700, fontSize: '0.85rem' }}>
+                  Stock: {productStock}
+                </div>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -590,7 +596,8 @@ function Clothing({ onAddToCart }) {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

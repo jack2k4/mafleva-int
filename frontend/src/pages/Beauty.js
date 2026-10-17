@@ -208,6 +208,10 @@ function Beauty({ onAddToCart }) {
       image: product?.image || getBeautyImageForProduct(product, index)
     }));
 
+    if (normalizedSource.length === 0) {
+      return [];
+    }
+
     const scopedSource = selectedCategory === 'all'
       ? normalizedSource
       : normalizedSource.filter((product) => product.subCategory === selectedCategory);
@@ -226,7 +230,7 @@ function Beauty({ onAddToCart }) {
       const grouped = beautySubCategories.flatMap((subCategory) => {
         const live = scopedSource.filter((product) => product.subCategory === subCategory);
         const fallback = fallbackRemainder.filter((product) => product.subCategory === subCategory);
-        return [...live, ...fallback];
+        return live.length > 0 ? [...live, ...fallback] : [];
       });
 
       return grouped;
@@ -237,6 +241,10 @@ function Beauty({ onAddToCart }) {
 
   useEffect(() => {
     fetchBeauty();
+
+    const handleProductUpdate = () => fetchBeauty();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
   }, [activeCategory]);
 
   const fetchBeauty = () => {
@@ -557,7 +565,9 @@ function Beauty({ onAddToCart }) {
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '25px'
         }}>
-          {products.map((product, index) => (
+          {products.map((product, index) => {
+            const productStock = Number(product?.stock ?? 1);
+            return (
             <div
               key={product.id}
               style={{
@@ -615,7 +625,11 @@ function Beauty({ onAddToCart }) {
               <Link to={'/product/' + product.id}>
                 <div style={{
                   height: '250px',
-                  background: '#f8f9fa'
+                  background: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden'
                 }}>
                   <img
                     src={getBeautyImageForProduct(product, index)}
@@ -624,7 +638,7 @@ function Beauty({ onAddToCart }) {
                       display: 'block',
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover'
+                      objectFit: 'contain'
                     }}
                   />
                 </div>
@@ -692,6 +706,9 @@ function Beauty({ onAddToCart }) {
                   </div>
                 )}
 
+                <div style={{ marginBottom: '10px', color: '#2d3436', fontWeight: 700, fontSize: '0.85rem' }}>
+                  Stock: {productStock}
+                </div>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -760,7 +777,8 @@ function Beauty({ onAddToCart }) {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

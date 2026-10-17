@@ -6,10 +6,10 @@ const cream = '#f7f1e7';
 const creamDeep = '#efe3d2';
 const creamCard = '#f9f4ee';
 const categories = [
-  { name: 'Beauty', icon: '/images%201/ba741899489fc321a99b0860f1d38847.jpg', link: '/beauty', color: '#fd79a8', desc: 'Skincare & Makeup' },
-  { name: 'Clothing', icon: '/images%201/clothing.jpg', link: '/clothing', color: '#0984e3', desc: 'Men, Women & Kids' },
-  { name: 'Perfumes', icon: '/images%201/download.png', link: '/perfumes', color: '#6c5ce7', desc: 'Branded & Niche' },
-  { name: 'Health Products', icon: '🌿', link: '/health', color: '#2ecc71', desc: 'Wellness & Care' }
+  { name: 'Beauty', icon: '/images%201/ba741899489fc321a99b0860f1d38847.jpg', link: '/shop', color: '#fd79a8', desc: 'Skincare & Makeup' },
+  { name: 'Clothing', icon: '/images%201/clothing.jpg', link: '/shop', color: '#0984e3', desc: 'Men, Women & Kids' },
+  { name: 'Perfumes', icon: '/images%201/download.png', link: '/shop', color: '#6c5ce7', desc: 'Branded & Niche' },
+  { name: 'Health Products', icon: '🌿', link: '/shop', color: '#2ecc71', desc: 'Wellness & Care' }
 ];
 
 const categoryMotion = [
@@ -21,34 +21,30 @@ const categoryMotion = [
 
 const featureCollections = [
   {
-    title: 'Explore Our Beauty Collection',
+    title: 'Explore Our beauty products',
     description: 'Discover premium skincare, makeup, and haircare products',
     image: '/images%201/ba741899489fc321a99b0860f1d38847.jpg',
-    button: 'Shop Beauty →',
     link: '/beauty',
     highlight: '#8d6d4e'
   },
   {
-    title: 'Explore Our Clothing Collection',
+    title: 'Explore Our clothing products',
     description: 'Discover the latest trends for men, women, and kids',
     image: '/images%201/clothing.jpg',
-    button: 'Shop Clothing →',
     link: '/clothing',
     highlight: '#f1e6d3'
   },
   {
-    title: 'Explore Our Perfumes Collection',
+    title: 'Explore Our perfume products',
     description: 'Discover elegant scents for men, women, and unisex styles',
     image: '/images%201/download.png',
-    button: 'Shop Perfumes →',
     link: '/perfumes',
     highlight: '#f1e6d3'
   },
   {
-    title: 'Explore Our Health Collection',
+    title: 'Explore Our health products',
     description: 'Support your wellness with trusted essentials and daily care',
     image: '/images/logo.jpeg',
-    button: 'Shop Health →',
     link: '/health',
     highlight: '#dfeecf'
   }
@@ -201,7 +197,7 @@ function Home() {
               margin: '0 auto'
             }}
           />
-          <a href="#main-shopping-options" style={{ display: 'inline-block', marginTop: '8px' }}>
+          <Link to="/shop" style={{ display: 'inline-block', marginTop: '8px' }}>
             <button
               style={{
                 padding: '14px 36px',
@@ -217,7 +213,7 @@ function Home() {
             >
               SHOP NOW
             </button>
-          </a>
+          </Link>
         </div>
 
         <div id="main-shopping-options" style={{ marginTop: '50px' }}>
@@ -313,8 +309,8 @@ function Home() {
       </div>
 
       {featureCollections.map((collection) => (
-        <Link key={collection.title} to={collection.link} style={{ textDecoration: 'none' }}>
           <div
+            key={collection.title}
             style={{
               marginTop: '30px',
               padding: '40px',
@@ -346,7 +342,7 @@ function Home() {
               }}
             />
             <div style={{ position: 'relative', zIndex: 1 }}>
-              {collection.link === '/shop?category=beauty' ? (
+              {collection.link === '/beauty' ? (
                 <div
                   style={{
                     overflow: 'hidden',
@@ -506,25 +502,9 @@ function Home() {
                 />
               )}
               <h2 style={{ fontSize: '2rem', margin: '0 0 12px' }}>{collection.title}</h2>
-              <p style={{ fontSize: '1.1rem', opacity: 0.9, margin: '0 0 18px' }}>{collection.description}</p>
-              <button
-                style={{
-                  marginTop: '10px',
-                  padding: '12px 30px',
-                  background: collection.highlight,
-                  color: '#111111',
-                  border: '1px solid rgba(17,17,17,0.08)',
-                  borderRadius: '30px',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                {collection.button}
-              </button>
+              <p style={{ fontSize: '1.1rem', opacity: 0.9, margin: 0 }}>{collection.description}</p>
             </div>
           </div>
-        </Link>
       ))}
 
       <div style={{ marginTop: '44px' }}>

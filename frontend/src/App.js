@@ -1,5 +1,5 @@
 ﻿import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import { COUNTRY_OPTIONS, resolveCurrencyFromLocale } from './utils/currency';
@@ -7,11 +7,8 @@ import { COUNTRY_OPTIONS, resolveCurrencyFromLocale } from './utils/currency';
 // Import all pages lazily to reduce the initial bundle size.
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const Gallery = lazy(() => import('./pages/Gallery'));
-const Beauty = lazy(() => import('./pages/Beauty'));
-const Clothing = lazy(() => import('./pages/Clothing'));
-const PerfumeSubCategory = lazy(() => import('./pages/PerfumeSubCategory'));
-const Health = lazy(() => import('./pages/Health'));
 const About = lazy(() => import('./pages/About'));
 const Account = lazy(() => import('./pages/Account'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -392,28 +389,59 @@ function App() {
     localStorage.setItem('mafleva-currency', nextCurrency);
   }, [selectedCountry]);
 
+  const getProductStock = (product) => Number(product?.stock ?? product?.inventory ?? 1);
+
+  const syncProductStock = (productId, nextStock) => {
+    try {
+      const storedProducts = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+      if (!Array.isArray(storedProducts) || storedProducts.length === 0) return;
+
+      const updatedProducts = storedProducts
+        .map((item) => (String(item.id) === String(productId) ? { ...item, stock: Number(nextStock ?? 0) } : item))
+        .filter((item) => Number(item.stock ?? 1) > 0);
+
+      localStorage.setItem('mafleva_admin_products', JSON.stringify(updatedProducts));
+      window.dispatchEvent(new Event('mafleva-products-updated'));
+    } catch (error) {
+      // Ignore storage sync errors and keep the storefront available.
+    }
+  };
+
   const addToCart = (product) => {
     if (!product) return;
 
     const productId = String(product.id ?? product._id ?? `${product.name}-${Math.random()}`);
+    const productStock = getProductStock(product);
+
+    if (productStock <= 0) {
+      return;
+    }
+
     const normalizedProduct = {
       id: productId,
       name: product.name || product.title || 'Mafleva Product',
       price: Number(product.discountPrice ?? product.price ?? 0),
       image: product.image || product.images?.[0]?.url || '/images/logo.jpeg',
-      category: product.category || 'general'
+      category: product.category || 'general',
+      stock: productStock
     };
 
     setCart((currentCart) => {
       const existingItem = currentCart.find((item) => item.id === productId);
+      const nextQuantity = existingItem ? existingItem.quantity + 1 : 1;
 
-      if (existingItem) {
-        return currentCart.map((item) =>
-          item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
-        );
+      if (nextQuantity > productStock) {
+        return currentCart;
       }
 
-      return [...currentCart, { ...normalizedProduct, quantity: 1 }];
+      const nextCart = existingItem
+        ? currentCart.map((item) =>
+            item.id === productId ? { ...item, quantity: nextQuantity } : item
+          )
+        : [...currentCart, { ...normalizedProduct, quantity: 1 }];
+
+      syncProductStock(productId, Math.max(productStock - nextQuantity, 0));
+      return nextCart;
     });
   };
 
@@ -448,11 +476,12 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/shop" element={<Shop onAddToCart={addToCart} selectedCurrency={selectedCurrency} />} />
+                <Route path="/product/:productId" element={<ProductDetail onAddToCart={addToCart} selectedCurrency={selectedCurrency} />} />
                 <Route path="/gallery" element={<Gallery />} />
-                <Route path="/health" element={<Health onAddToCart={addToCart} />} />
-                <Route path="/beauty" element={<Beauty onAddToCart={addToCart} />} />
-                <Route path="/clothing" element={<Clothing onAddToCart={addToCart} />} />
-                <Route path="/perfumes" element={<PerfumeSubCategory onAddToCart={addToCart} />} />
+                <Route path="/health" element={<Navigate to="/shop" replace />} />
+                <Route path="/beauty" element={<Navigate to="/shop" replace />} />
+                <Route path="/clothing" element={<Navigate to="/shop" replace />} />
+                <Route path="/perfumes" element={<Navigate to="/shop" replace />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/account" element={<Account />} />
                 <Route path="/contact" element={<Contact />} />

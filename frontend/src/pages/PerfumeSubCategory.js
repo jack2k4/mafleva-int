@@ -28,7 +28,11 @@ function PerfumeSubCategory({ onAddToCart }) {
 
   useEffect(() => {
     fetchPerfumes();
-  }, [activeCategory]);
+
+    const handleProductUpdate = () => fetchPerfumes();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
+  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
 
   const fetchPerfumes = () => {
     setLoading(true);
@@ -41,7 +45,7 @@ function PerfumeSubCategory({ onAddToCart }) {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        let productsData = data.products || [];
+        let productsData = Array.isArray(data?.products) ? data.products : [];
         
         if (priceRange.min) {
           productsData = productsData.filter(p => p.price >= Number(priceRange.min));
@@ -63,6 +67,7 @@ function PerfumeSubCategory({ onAddToCart }) {
       })
       .catch(err => {
         console.error('Error fetching perfumes:', err);
+        setProducts([]);
         setLoading(false);
       });
   };
@@ -393,14 +398,25 @@ function PerfumeSubCategory({ onAddToCart }) {
           gap: '25px'
         }}>
           {products.map((product, index) => (
-            <div key={product.id} style={{
-              background: 'white',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-              transition: 'all 0.3s ease',
-              position: 'relative'
-            }}>
+            <div
+              key={product.id}
+              style={{
+                background: 'white',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                transition: 'all 0.3s ease',
+                position: 'relative'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-5px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.08)';
+              }}
+            >
               {product.discountPrice && (
                 <div style={{
                   position: 'absolute',
@@ -420,8 +436,8 @@ function PerfumeSubCategory({ onAddToCart }) {
 
               <Link to={'/product/' + product.id}>
                 <div style={{
-                  height: '200px',
-                  background: '#f8f9fa',
+                  height: '250px',
+                  background: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -430,50 +446,92 @@ function PerfumeSubCategory({ onAddToCart }) {
                   <img
                     src={getPerfumeImageForProduct(product, index)}
                     alt={product.name || 'Perfume product'}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />
                 </div>
               </Link>
+
               <div style={{ padding: '20px' }}>
-                <h3 style={{ margin: '0 0 5px 0' }}>{product.name}</h3>
-                <p style={{ color: '#6c757d', fontSize: '0.9rem' }}>{product.brand}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
+                <Link to={'/product/' + product.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <h3 style={{
+                    margin: '0 0 5px 0',
+                    fontSize: '1.1rem',
+                    color: '#2d3436'
+                  }}>
+                    {product.name}
+                  </h3>
+                </Link>
+
+                <p style={{
+                  color: '#6c757d',
+                  fontSize: '0.9rem',
+                  margin: '0 0 8px 0'
+                }}>
+                  {product.brand || 'Mafleva Fragrance'}
+                </p>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  marginBottom: '10px'
+                }}>
                   {renderStars(product.rating)}
-                  <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+                  <span style={{ fontSize: '0.85rem', color: '#6c757d', marginLeft: '5px' }}>
                     ({product.numReviews || 0})
                   </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
                   <div>
                     {product.discountPrice ? (
                       <>
-                        <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#ff6b6b' }}>
-                          
+                        <span style={{
+                          fontSize: '1.3rem',
+                          fontWeight: 'bold',
+                          color: '#ff6b6b'
+                        }}>
+                          KES {Number(product.discountPrice).toLocaleString()}
                         </span>
-                        <span style={{ fontSize: '0.9rem', color: '#6c757d', textDecoration: 'line-through', marginLeft: '8px' }}>
-                          
+                        <span style={{
+                          fontSize: '0.9rem',
+                          color: '#6c757d',
+                          textDecoration: 'line-through',
+                          marginLeft: '8px'
+                        }}>
+                          KES {Number(product.price || 0).toLocaleString()}
                         </span>
                       </>
                     ) : (
-                      <span style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
-                        
+                      <span style={{
+                        fontSize: '1.3rem',
+                        fontWeight: 'bold',
+                        color: '#2d3436'
+                      }}>
+                        KES {Number(product.price || 0).toLocaleString()}
                       </span>
                     )}
                   </div>
-                  <button style={{
-                    padding: '8px 16px',
-                    background: '#ff6b6b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                  onClick={() => onAddToCart && onAddToCart({
-                    ...product,
-                    category: 'perfumes',
-                    image: getPerfumeImageForProduct(product, index)
-                  })}>
+                  <button
+                    style={{
+                      padding: '8px 16px',
+                      background: '#ff6b6b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                    onClick={() => onAddToCart && onAddToCart({
+                      ...product,
+                      category: 'perfumes',
+                      image: getPerfumeImageForProduct(product, index)
+                    })}
+                  >
                     <FaShoppingCart /> Add
                   </button>
                 </div>

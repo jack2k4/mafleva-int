@@ -1,10 +1,15 @@
-﻿import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+﻿import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Beauty from './Beauty';
+import Clothing from './Clothing';
+import Health from './Health';
+import PerfumeSubCategory from './PerfumeSubCategory';
 import { formatCurrency, resolveCurrencyFromLocale } from '../utils/currency';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
 function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState(defaultCategory);
@@ -25,48 +30,103 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
   }, [location.search, defaultCategory]);
 
   useEffect(() => {
-    let url = 'http://localhost:5000/api/products';
-    const params = new URLSearchParams();
-    
-    if (category !== 'all') {
-      params.append('category', category);
-    }
-    if (subCategory !== 'all') {
-      params.append('subCategory', subCategory);
-    }
-    
-    const queryString = params.toString();
-    if (queryString) {
-      url += '?' + queryString;
-    }
+    const loadProducts = () => {
+      let url = 'http://localhost:5000/api/products';
+      const params = new URLSearchParams();
+      
+      if (category !== 'all') {
+        params.append('category', category);
+      }
+      if (subCategory !== 'all') {
+        params.append('subCategory', subCategory);
+      }
+      
+      const queryString = params.toString();
+      if (queryString) {
+        url += '?' + queryString;
+      }
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        // Handle both array and object responses
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else if (data.products && Array.isArray(data.products)) {
-          setProducts(data.products);
-        } else {
-          setProducts([]);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching products:', err);
-        setProducts(fallbackProducts);
-        setLoading(false);
-      });
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          let nextProducts = [];
+          if (Array.isArray(data)) {
+            nextProducts = data;
+          } else if (data.products && Array.isArray(data.products)) {
+            nextProducts = data.products;
+          }
+
+          if (nextProducts.length === 0) {
+            const stored = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+            if (stored.length > 0) nextProducts = stored;
+          }
+
+          setProducts(nextProducts.length > 0 ? nextProducts : []);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error fetching products:', err);
+          const stored = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+          setProducts(stored.length > 0 ? stored : []);
+          setLoading(false);
+        });
+    };
+
+    loadProducts();
+
+    const handleProductUpdate = () => loadProducts();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
   }, [category, subCategory]);
 
   const categories = [
     { id: 'all', name: 'All Products' },
-    { id: 'beauty', name: 'Beauty' },
-    { id: 'clothing', name: 'Clothing' },
-    { id: 'perfumes', name: 'Perfumes' },
+    { id: 'beauty', name: 'Beauty Products' },
+    { id: 'clothing', name: 'Clothing Products' },
+    { id: 'perfumes', name: 'Perfume Products' },
     { id: 'health', name: 'Health Products' }
   ];
+
+  const handleCategoryNavigation = (nextCategory) => {
+    const params = new URLSearchParams();
+    if (nextCategory !== 'all') {
+      params.set('category', nextCategory);
+    }
+
+    const queryString = params.toString();
+    navigate(`/shop${queryString ? `?${queryString}` : ''}`);
+  };
+
+  const openProductDetails = (productId) => {
+    if (!productId) return;
+    navigate(`/product/${productId}`);
+  };
+
+  const renderShopHeader = () => (
+    <>
+      <h1 style={{ color: '#2d3436', marginBottom: '20px' }}>Our shop&apos;s collection</h1>
+
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => handleCategoryNavigation(cat.id)}
+            style={{
+              padding: '10px 20px',
+              background: category === cat.id ? '#ff6b6b' : '#f8f9fa',
+              color: category === cat.id ? 'white' : '#2d3436',
+              border: 'none',
+              borderRadius: '25px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            {cat.name}
+          </button>
+        ))}
+      </div>
+    </>
+  );
 
   const categoryImageLibrary = {
     beauty: [
@@ -74,7 +134,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
       '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg',
       '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.33.jpeg',
       '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34.jpeg',
-      '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.39.jpeg'
+      '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.38%20(1).jpeg'
     ],
     clothing: [
       '/wear/23626f85d3836f72d6a10dc547adb601.jpg',
@@ -84,12 +144,12 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
       '/wear/97d67efc93c9e1ea705a9845ece40b13.jpg'
     ],
     shop: [
-      '/shop/23626f85d3836f72d6a10dc547adb601.jpg',
-      '/shop/45591080c617ba19d510476947307a2e.jpg',
-      '/shop/62a50cc5b187807962bc6d67691c97d8.jpg',
-      '/shop/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg',
-      '/shop/97d67efc93c9e1ea705a9845ece40b13.jpg',
-      '/shop/9a9c7e6e063fe62302f281fbacbccb09.jpg'
+      '/wear/23626f85d3836f72d6a10dc547adb601.jpg',
+      '/wear/45591080c617ba19d510476947307a2e.jpg',
+      '/wear/62a50cc5b187807962bc6d67691c97d8.jpg',
+      '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg',
+      '/wear/97d67efc93c9e1ea705a9845ece40b13.jpg',
+      '/wear/9a9c7e6e063fe62302f281fbacbccb09.jpg'
     ],
     perfumes: [
       '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg',
@@ -99,11 +159,11 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
       '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg'
     ],
     health: [
-      '/shop/23626f85d3836f72d6a10dc547adb601.jpg',
-      '/shop/45591080c617ba19d510476947307a2e.jpg',
-      '/shop/62a50cc5b187807962bc6d67691c97d8.jpg',
-      '/shop/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg',
-      '/shop/97d67efc93c9e1ea705a9845ece40b13.jpg'
+      '/wear/23626f85d3836f72d6a10dc547adb601.jpg',
+      '/wear/45591080c617ba19d510476947307a2e.jpg',
+      '/wear/62a50cc5b187807962bc6d67691c97d8.jpg',
+      '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg',
+      '/wear/97d67efc93c9e1ea705a9845ece40b13.jpg'
     ]
   };
 
@@ -369,11 +429,24 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
     return raw;
   };
 
+  const getProductStock = (product) => Number(product?.stock ?? 1);
+
   const getProductImage = (product, index) => {
+    const productImages = Array.isArray(product?.images)
+      ? product.images.map((img) => img?.url || '').filter(Boolean)
+      : [];
+
+    if (product?.image) {
+      return product.image;
+    }
+
+    if (productImages.length > 0) {
+      return productImages[0];
+    }
+
     const productCategory = getNormalizedCategory(product);
     const activeCategory = category !== 'all' ? category : productCategory;
 
-    // Enforce folder separation by category.
     if (activeCategory === 'beauty' || activeCategory === 'clothing' || activeCategory === 'perfumes' || activeCategory === 'health') {
       const pool = categoryImageLibrary[activeCategory] || [];
       if (pool.length > 0) {
@@ -381,20 +454,71 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
       }
     }
 
-    const productImages = Array.isArray(product?.images)
-      ? product.images.map((img) => img?.url || '').filter(Boolean)
-      : [];
-
-    if (productImages.length > 0) {
-      return productImages[0];
-    }
-
     const shopPool = categoryImageLibrary.shop || [];
     return shopPool[(Number(product?.id || index) + 1) % shopPool.length] || shopPool[0];
   };
 
+  const allProductsGallery = useMemo(() => {
+    const mixedImages = [
+      ...(categoryImageLibrary.beauty || []),
+      ...(categoryImageLibrary.clothing || []),
+      ...(categoryImageLibrary.perfumes || []),
+      ...(categoryImageLibrary.health || []),
+      ...(categoryImageLibrary.shop || [])
+    ];
+
+    const uniqueImages = Array.from(new Set(mixedImages.filter(Boolean)));
+    const shuffled = [...uniqueImages];
+
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled;
+  }, []);
+
+  if (category === 'beauty') {
+    return (
+      <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', background: '#f6efe7', borderRadius: '18px' }}>
+        {renderShopHeader()}
+        <Beauty onAddToCart={onAddToCart} />
+      </div>
+    );
+  }
+
+  if (category === 'clothing') {
+    return (
+      <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', background: '#f6efe7', borderRadius: '18px' }}>
+        {renderShopHeader()}
+        <Clothing onAddToCart={onAddToCart} />
+      </div>
+    );
+  }
+
+  if (category === 'perfumes') {
+    return (
+      <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', background: '#f6efe7', borderRadius: '18px' }}>
+        {renderShopHeader()}
+        <PerfumeSubCategory onAddToCart={onAddToCart} />
+      </div>
+    );
+  }
+
+  if (category === 'health') {
+    return (
+      <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', background: '#f6efe7', borderRadius: '18px' }}>
+        {renderShopHeader()}
+        <Health onAddToCart={onAddToCart} />
+      </div>
+    );
+  }
+
   const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-KE';
   const currency = selectedCurrency || resolveCurrencyFromLocale(locale);
+  const visibleProducts = Array.isArray(products)
+    ? products.filter((product) => getProductStock(product) > 0)
+    : [];
   const structuredData = buildCatalogStructuredData({
     pageTitle: 'Shop Products | Mafleva International Limited',
     pageDescription: 'Browse all Mafleva International products, including beauty, clothing, perfumes, and wellness essentials.',
@@ -407,31 +531,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto', background: '#f6efe7', borderRadius: '18px' }}>
       <StructuredData data={structuredData} />
-      <h1 style={{ color: '#2d3436', marginBottom: '20px' }}>Shop Our Collection</h1>
-      
-      {/* Category Filters */}
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        {categories.map(cat => (
-          <button
-            key={cat.id}
-            onClick={() => {
-              setCategory(cat.id);
-              setSubCategory('all');
-            }}
-            style={{
-              padding: '10px 20px',
-              background: category === cat.id ? '#ff6b6b' : '#f8f9fa',
-              color: category === cat.id ? 'white' : '#2d3436',
-              border: 'none',
-              borderRadius: '25px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            {cat.name}
-          </button>
-        ))}
-      </div>
+      {renderShopHeader()}
 
       {/* Sub-Category Filters */}
       {getSubCategories().length > 0 && (
@@ -456,15 +556,46 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
         </div>
       )}
 
-      {/* Results Count */}
-      <p style={{ color: '#6c757d', marginBottom: '20px' }}>
-        Showing {Array.isArray(products) ? products.length : 0} products
-        {category !== 'all' && ' in ' + category}
-        {subCategory !== 'all' && ' - ' + subCategory}
-      </p>
+      {category === 'all' ? (
+        <>
+          <p style={{ color: '#6c757d', marginBottom: '20px' }}>
+            Explore random highlights of what our shop offers.
+          </p>
 
-      {/* Products Grid */}
-      {loading ? (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+            gap: '18px'
+          }}>
+            {allProductsGallery.map((image, index) => (
+              <div
+                key={`${image}-${index}`}
+                style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(142, 104, 71, 0.08)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
+                }}
+              >
+                <img
+                  src={image}
+                  alt="Shop offer"
+                  onError={(e) => {
+                    e.currentTarget.parentElement.style.display = 'none';
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: '220px',
+                    objectFit: 'cover'
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </>
+      ) : loading ? (
         <div style={{ textAlign: 'center', padding: '50px' }}>
           <div style={{ fontSize: '2rem' }}>⏳</div>
           <p>Loading products...</p>
@@ -476,29 +607,49 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
           <p style={{ color: '#6c757d' }}>Try adjusting your filters</p>
         </div>
       ) : (
+        <>
+          {/* Results Count */}
+          <p style={{ color: '#6c757d', marginBottom: '20px' }}>
+            Showing {visibleProducts.length} products
+            {category !== 'all' && ' in ' + category}
+            {subCategory !== 'all' && ' - ' + subCategory}
+          </p>
+
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '25px'
         }}>
-          {products.map((product, index) => {
+          {visibleProducts.map((product, index) => {
             const normalizedCategory = getNormalizedCategory(product);
             const displayName = product.name || product.title || (normalizedCategory === 'health' ? 'Health Product' : 'Product');
             const displayBrand = product.brand || (normalizedCategory === 'health' ? 'Mafleva Health' : product.category || 'Mafleva');
-            const isWaitingCategory = category === 'clothing' || category === 'perfumes';
-            const productImage = isWaitingCategory ? '' : getProductImage(product, index);
+            const productImage = getProductImage(product, index);
+            const productStock = getProductStock(product);
 
             return (
-            <div key={product.id} style={{
-              background: 'white',
-              borderRadius: '10px',
-              overflow: 'hidden',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              transition: 'transform 0.3s ease'
-            }}>
+            <div
+              key={product.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => openProductDetails(product.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  openProductDetails(product.id);
+                }
+              }}
+              style={{
+                background: 'white',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                transition: 'transform 0.3s ease',
+                cursor: 'pointer'
+              }}>
               <div style={{
                 height: '200px',
-                background: '#f8f9fa',
+                background: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -508,7 +659,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
                   {productImage ? (
                     <img
                       src={productImage}
-                      alt={product.name}
+                      alt={displayName}
                       onError={(e) => {
                         e.target.style.display = 'none';
                         const fallback = e.target.parentNode.querySelector('[data-fallback="icon"]');
@@ -517,7 +668,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
                       style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
+                        objectFit: 'contain',
                         display: 'block'
                       }}
                     />
@@ -530,7 +681,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
                       }}
                     />
                   )}
-                {!isWaitingCategory && product.discountPrice && (
+                {product.discountPrice && (
                   <span style={{
                     position: 'absolute',
                     top: '10px',
@@ -546,83 +697,84 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
                   </span>
                 )}
               </div>
-              {isWaitingCategory ? (
-                <div style={{ padding: '20px', textAlign: 'center' }}>
-                  <p style={{ margin: 0, color: '#6c757d', fontWeight: 'bold' }}>Waiting for products</p>
+              <div style={{ padding: '20px' }}>
+                <h3 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>
+                  {displayName}
+                </h3>
+                <p style={{ color: '#6c757d', fontSize: '0.9rem', margin: '0 0 5px 0' }}>
+                  {displayBrand}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
+                  <span style={{ color: '#fdcb6e' }}>★</span>
+                  <span style={{ fontSize: '0.9rem' }}>{product.rating || 0}</span>
+                  <span style={{ color: '#6c757d', fontSize: '0.8rem' }}>
+                    ({product.numReviews || 0} reviews)
+                  </span>
                 </div>
-              ) : (
-                <div style={{ padding: '20px' }}>
-                  <h3 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>
-                    {displayName}
-                  </h3>
-                  <p style={{ color: '#6c757d', fontSize: '0.9rem', margin: '0 0 5px 0' }}>
-                    {displayBrand}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '10px' }}>
-                    <span style={{ color: '#fdcb6e' }}>★</span>
-                    <span style={{ fontSize: '0.9rem' }}>{product.rating || 0}</span>
-                    <span style={{ color: '#6c757d', fontSize: '0.8rem' }}>
-                      ({product.numReviews || 0} reviews)
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      {product.discountPrice ? (
-                        <>
-                          <span style={{
-                            fontSize: '1.3rem',
-                            fontWeight: 'bold',
-                            color: '#ff6b6b'
-                          }}>
-                            {formatCurrency(product.discountPrice, locale, currency)}
-                          </span>
-                          <span style={{
-                            fontSize: '0.9rem',
-                            color: '#6c757d',
-                            textDecoration: 'line-through',
-                            marginLeft: '8px'
-                          }}>
-                            {formatCurrency(product.price, locale, currency)}
-                          </span>
-                        </>
-                      ) : (
+                <div style={{ marginBottom: '10px', color: '#2d3436', fontWeight: 700, fontSize: '0.85rem' }}>
+                  Stock: {productStock}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    {product.discountPrice ? (
+                      <>
                         <span style={{
                           fontSize: '1.3rem',
                           fontWeight: 'bold',
-                          color: '#2d3436'
+                          color: '#ff6b6b'
+                        }}>
+                          {formatCurrency(product.discountPrice, locale, currency)}
+                        </span>
+                        <span style={{
+                          fontSize: '0.9rem',
+                          color: '#6c757d',
+                          textDecoration: 'line-through',
+                          marginLeft: '8px'
                         }}>
                           {formatCurrency(product.price, locale, currency)}
+                        </span>
+                      </>
+                    ) : (
+                      <span style={{
+                        fontSize: '1.3rem',
+                        fontWeight: 'bold',
+                        color: '#2d3436'
+                      }}>
+                        {formatCurrency(product.price, locale, currency)}
                         </span>
                       )}
                     </div>
                     <button
-                      onClick={() => onAddToCart && onAddToCart({
-                        id: product.id,
-                        name: displayName,
-                        price: product.discountPrice || product.price,
-                        image: getProductImage(product, index),
-                        category: normalizedCategory,
-                        images: product.images || []
-                      })}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onAddToCart && onAddToCart({
+                          id: product.id,
+                          name: displayName,
+                          price: product.discountPrice || product.price,
+                          image: getProductImage(product, index),
+                          category: normalizedCategory,
+                          images: product.images || []
+                        });
+                      }}
                       style={{
-                      padding: '8px 16px',
-                      background: '#ff6b6b',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold'
-                    }}
+                        padding: '8px 16px',
+                        background: '#ff6b6b',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
                     >
                       Add to Cart
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
             );
           })}
         </div>
+        </>
       )}
     </div>
   );

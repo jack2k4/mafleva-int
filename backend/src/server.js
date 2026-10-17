@@ -3,25 +3,114 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const compression = require('compression');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const uploadDir = path.join(__dirname, '..', 'uploads');
+fs.mkdirSync(uploadDir, { recursive: true });
+const dataDir = path.join(__dirname, '..', 'data');
+const productsDataPath = path.join(dataDir, 'products.json');
+fs.mkdirSync(dataDir, { recursive: true });
+
+const readProductsFromDisk = () => {
+  try {
+    if (!fs.existsSync(productsDataPath)) {
+      return [];
+    }
+
+    const raw = fs.readFileSync(productsDataPath, 'utf8');
+    const parsed = JSON.parse(raw || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const writeProductsToDisk = (nextProducts) => {
+  fs.writeFileSync(productsDataPath, JSON.stringify(nextProducts, null, 2));
+};
 
 app.enable('trust proxy');
 
 // Middleware
 app.use(cors());
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 app.use(compression());
 app.use(express.json());
+app.use('/uploads', express.static(uploadDir));
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const safeName = file.originalname.replace(/\s+/g, '-').toLowerCase();
+    const extension = path.extname(safeName) || '.jpg';
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).slice(2, 8);
+    cb(null, `${timestamp}-${random}${extension}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/gif'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Only image uploads are allowed.'));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+const findProductIndexById = (id) => {
+  const productId = String(id);
+  return products.findIndex((product) => String(product.id) === productId);
+};
+
+const normalizeUploadedProduct = (body, uploadedFile) => {
+  const imageUrl = uploadedFile
+    ? `http://localhost:${PORT}/uploads/${uploadedFile.filename}`
+    : (body.image || body.imageUrl || '/images/logo.jpeg');
+
+  const payload = {
+    ...body,
+    name: body.name || 'New Product',
+    category: body.category || 'beauty',
+    subCategory: body.subCategory || (body.category === 'beauty' ? 'skincare' : (body.category === 'clothing' ? 'women' : 'unisex')),
+    price: Number(body.price || 0),
+    discountPrice: Number(body.discountPrice ?? body.price ?? 0),
+    stock: Number(body.stock || 0),
+    rating: Number(body.rating || 4.8),
+    brand: body.brand || 'Mafleva',
+    description: body.description || body.name || 'Mafleva product',
+    image: imageUrl,
+    images: uploadedFile ? [{ url: imageUrl }] : (Array.isArray(body.images) ? body.images : [{ url: imageUrl }])
+  };
+
+  if (body.images && typeof body.images === 'string') {
+    try {
+      payload.images = JSON.parse(body.images);
+    } catch (err) {
+      payload.images = [{ url: imageUrl }];
+    }
+  }
+
+  return payload;
+};
 
 // ============================================
 // DATA: Products
 // ============================================
 
-let products = [
+const defaultProducts = [
   // ========== BEAUTY - SKINCARE ==========
   {
     id: 1,
@@ -35,7 +124,7 @@ let products = [
     numReviews: 127,
     stock: 50,
     description: 'Premium moisturizing face cream with natural ingredients for glowing skin.',
-    images: [{ url: 'https://via.placeholder.com/300x300/ff6b6b/ffffff?text=Face+Cream' }],
+    images: [{ url: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg' }],
     ingredients: ['Shea Butter', 'Vitamin E', 'Aloe Vera', 'Hyaluronic Acid']
   },
   {
@@ -50,7 +139,7 @@ let products = [
     numReviews: 156,
     stock: 60,
     description: 'Vitamin C serum for brightening and evening skin tone.',
-    images: [{ url: 'https://via.placeholder.com/300x300/fdcb6e/ffffff?text=Vitamin+C' }],
+    images: [{ url: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg' }],
     ingredients: ['Vitamin C', 'Hyaluronic Acid', 'Vitamin E']
   },
   // ========== BEAUTY - HERBAL ==========
@@ -66,7 +155,7 @@ let products = [
     numReviews: 89,
     stock: 45,
     description: 'Gentle herbal face wash with natural ingredients for daily cleansing.',
-    images: [{ url: 'https://via.placeholder.com/300x300/00b894/ffffff?text=Herbal+Face+Wash' }],
+    images: [{ url: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20(1).jpeg' }],
     ingredients: ['Neem', 'Turmeric', 'Aloe Vera', 'Rose Water']
   },
   // ========== BEAUTY - OILS ==========
@@ -82,7 +171,7 @@ let products = [
     numReviews: 156,
     stock: 55,
     description: 'Pure Moroccan Argan Oil for hair and skin nourishment.',
-    images: [{ url: 'https://via.placeholder.com/300x300/fdcb6e/ffffff?text=Argan+Oil' }],
+    images: [{ url: '/images/oils.jpeg' }],
     ingredients: ['100% Pure Argan Oil']
   },
   // ========== PERFUMES - MEN ==========
@@ -98,7 +187,7 @@ let products = [
     numReviews: 89,
     stock: 30,
     description: 'Classic fragrance for men with woody and spicy notes.',
-    images: [{ url: 'https://via.placeholder.com/300x300/2d3436/ffffff?text=Men+Perfume' }],
+    images: [{ url: '/perfumes/1f943a1d5fc12debdd2dfc91cf717cf9.jpg' }],
     fragranceNotes: ['Cedarwood', 'Bergamot', 'Sandalwood', 'Patchouli'],
     volume: '100ml'
   },
@@ -115,7 +204,7 @@ let products = [
     numReviews: 156,
     stock: 35,
     description: 'Delicate floral fragrance with notes of rose, jasmine, and vanilla.',
-    images: [{ url: 'https://via.placeholder.com/300x300/fd79a8/ffffff?text=Women+Perfume' }],
+    images: [{ url: '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg' }],
     fragranceNotes: ['Rose', 'Jasmine', 'Vanilla', 'Musk'],
     volume: '100ml'
   },
@@ -132,7 +221,7 @@ let products = [
     numReviews: 78,
     stock: 25,
     description: 'Unique unisex fragrance blending Oud with warm Amber notes.',
-    images: [{ url: 'https://via.placeholder.com/300x300/fdcb6e/ffffff?text=Unisex+Oud' }],
+    images: [{ url: '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg' }],
     fragranceNotes: ['Oud', 'Amber', 'Sandalwood', 'Spices'],
     volume: '100ml'
   },
@@ -149,7 +238,7 @@ let products = [
     numReviews: 45,
     stock: 20,
     description: 'Premium refillable perfume with eco-friendly packaging.',
-    images: [{ url: 'https://via.placeholder.com/300x300/00b894/ffffff?text=Refillable+Perfume' }],
+    images: [{ url: '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg' }],
     fragranceNotes: ['Rose', 'Oud', 'Bergamot', 'Amber'],
     volume: '100ml + Refill'
   },
@@ -166,7 +255,7 @@ let products = [
     numReviews: 203,
     stock: 40,
     description: 'Light and comfortable floral summer dress perfect for warm days.',
-    images: [{ url: 'https://via.placeholder.com/300x300/ff6b6b/ffffff?text=Summer+Dress' }],
+    images: [{ url: '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg' }],
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Red Floral', 'Blue Floral', 'Yellow Floral'],
     material: '100% Cotton'
@@ -184,7 +273,7 @@ let products = [
     numReviews: 78,
     stock: 25,
     description: 'Premium genuine leather jacket for a rugged, stylish look.',
-    images: [{ url: 'https://via.placeholder.com/300x300/2d3436/ffffff?text=Leather+Jacket' }],
+    images: [{ url: '/wear/45591080c617ba19d510476947307a2e.jpg' }],
     sizes: ['M', 'L', 'XL', 'XXL'],
     colors: ['Black', 'Brown'],
     material: 'Genuine Leather'
@@ -202,12 +291,17 @@ let products = [
     numReviews: 156,
     stock: 70,
     description: 'Set of 3 colorful t-shirts for kids. Soft and comfortable.',
-    images: [{ url: 'https://via.placeholder.com/300x300/fd79a8/ffffff?text=Kids+T-Shirt' }],
+    images: [{ url: '/wear/62a50cc5b187807962bc6d67691c97d8.jpg' }],
     sizes: ['2T', '3T', '4T', '5T'],
     colors: ['Blue', 'Red', 'Yellow', 'Green'],
     material: '100% Cotton'
   }
 ];
+
+let products = readProductsFromDisk();
+if (products.length === 0) {
+  products = [...defaultProducts];
+}
 
 let orders = [
   {
@@ -318,7 +412,7 @@ app.get('/api/inventory/alerts', (req, res) => {
 
 // GET single product
 app.get('/api/products/:id', (req, res) => {
-  const product = products.find(p => p.id === parseInt(req.params.id));
+  const product = products.find((p) => String(p.id) === String(req.params.id));
   if (!product) {
     return res.status(404).json({ message: 'Product not found' });
   }
@@ -326,42 +420,51 @@ app.get('/api/products/:id', (req, res) => {
 });
 
 // POST - Create new product
-app.post('/api/products', (req, res) => {
-  const newProduct = {
-    id: products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1,
-    ...req.body,
-    rating: req.body.rating || 0,
-    numReviews: 0,
-    stock: req.body.stock || 0,
-    images: req.body.images || [{ url: 'https://via.placeholder.com/300x300' }]
-  };
-  products.push(newProduct);
-  res.status(201).json({ 
-    message: 'Product created successfully!',
-    product: newProduct 
-  });
+app.post('/api/products', upload.single('image'), (req, res) => {
+  try {
+    const newProduct = normalizeUploadedProduct(req.body, req.file);
+    newProduct.id = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    newProduct.numReviews = Number(newProduct.numReviews || 0);
+    products.push(newProduct);
+    writeProductsToDisk(products);
+
+    res.status(201).json({
+      message: 'Product created successfully!',
+      product: newProduct
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message || 'Could not create product.' });
+  }
 });
 
 // PUT - Update product
-app.put('/api/products/:id', (req, res) => {
-  const index = products.findIndex(p => p.id === parseInt(req.params.id));
+app.put('/api/products/:id', upload.single('image'), (req, res) => {
+  const index = findProductIndexById(req.params.id);
   if (index === -1) {
     return res.status(404).json({ message: 'Product not found' });
   }
-  products[index] = { ...products[index], ...req.body };
-  res.json({ 
-    message: 'Product updated successfully!',
-    product: products[index] 
-  });
+
+  try {
+    const updated = normalizeUploadedProduct({ ...products[index], ...req.body }, req.file || (req.body.image ? { filename: req.body.image.split('/uploads/').pop() } : null));
+    products[index] = { ...products[index], ...updated };
+    writeProductsToDisk(products);
+    res.json({
+      message: 'Product updated successfully!',
+      product: products[index]
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message || 'Could not update product.' });
+  }
 });
 
 // DELETE - Delete product
 app.delete('/api/products/:id', (req, res) => {
-  const index = products.findIndex(p => p.id === parseInt(req.params.id));
+  const index = findProductIndexById(req.params.id);
   if (index === -1) {
     return res.status(404).json({ message: 'Product not found' });
   }
   products.splice(index, 1);
+  writeProductsToDisk(products);
   res.json({ message: 'Product deleted successfully!' });
 });
 

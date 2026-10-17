@@ -12,62 +12,18 @@ function Health({ onAddToCart }) {
   const [sortBy, setSortBy] = useState('default');
   const healthSubCategories = ['wellness', 'care'];
 
-  const buildHealthFallbackProducts = () => {
-    const subCategoryNames = {
-      wellness: 'Wellness',
-      care: 'Care'
-    };
-
-    return healthSubCategories.flatMap((subCategory) => (
-      Array.from({ length: 10 }, (_, index) => ({
-        id: `health-${subCategory}-${index + 1}`,
-        name: `${subCategoryNames[subCategory]} Product ${index + 1}`,
-        brand: 'Mafleva Health',
-        price: 540 + index * 40,
-        rating: 4.4 + (index % 3) * 0.2,
-        numReviews: 12 + index * 2,
-        subCategory,
-        image: ''
-      }))
-    ));
-  };
-
-  const ensureTenPerCategory = (sourceProducts, selectedCategory) => {
-    const fallbackProducts = buildHealthFallbackProducts();
-
-    const fillCategory = (subCategory) => {
-      const fromSource = sourceProducts
-        .filter((product) => product?.subCategory === subCategory)
-        .slice(0, 10)
-        .map((product, index) => ({
-          ...product,
-          id: product?.id || `health-live-${subCategory}-${index + 1}`,
-          brand: product?.brand || 'Mafleva Health',
-          price: Number(product?.price || 0),
-          rating: Number(product?.rating || 4.5),
-          numReviews: Number(product?.numReviews || 9),
-          subCategory,
-          image: ''
-        }));
-
-      if (fromSource.length === 10) return fromSource;
-
-      const fillers = fallbackProducts
-        .filter((product) => product.subCategory === subCategory)
-        .slice(0, 10 - fromSource.length)
-        .map((product) => ({
-          ...product,
-          id: `${product.id}-fallback`
-        }));
-
-      return [...fromSource, ...fillers];
-    };
-
-    if (selectedCategory === 'all') {
-      return healthSubCategories.flatMap(fillCategory);
+  const filterProductsByCategory = (sourceProducts, selectedCategory) => {
+    if (!Array.isArray(sourceProducts) || sourceProducts.length === 0) {
+      return [];
     }
 
-    return fillCategory(selectedCategory);
+    if (selectedCategory === 'all') {
+      return sourceProducts.filter(Boolean);
+    }
+
+    return sourceProducts.filter(
+      (product) => String(product?.subCategory || '').toLowerCase() === selectedCategory
+    );
   };
 
   const applyFiltersAndSort = (items) => {
@@ -94,7 +50,11 @@ function Health({ onAddToCart }) {
 
   useEffect(() => {
     fetchHealth();
-  }, [activeCategory]);
+
+    const handleProductUpdate = () => fetchHealth();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
+  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
 
   const fetchHealth = () => {
     setLoading(true);
@@ -107,8 +67,12 @@ function Health({ onAddToCart }) {
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        const sourceProducts = data.products || [];
-        const completeCatalog = ensureTenPerCategory(sourceProducts, activeCategory);
+        const storedProducts = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+        const sourceProducts = Array.isArray(data?.products) && data.products.length > 0
+          ? data.products
+          : storedProducts.filter((product) => String(product?.category || '').toLowerCase() === 'health');
+
+        const completeCatalog = filterProductsByCategory(sourceProducts, activeCategory);
         const refinedCatalog = applyFiltersAndSort(completeCatalog);
 
         setProducts(refinedCatalog);
@@ -116,7 +80,13 @@ function Health({ onAddToCart }) {
       })
       .catch((err) => {
         console.error('Error fetching health products:', err);
-        const fallback = applyFiltersAndSort(ensureTenPerCategory([], activeCategory));
+        const storedProducts = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+        const fallback = applyFiltersAndSort(
+          filterProductsByCategory(
+            storedProducts.filter((product) => String(product?.category || '').toLowerCase() === 'health'),
+            activeCategory
+          )
+        );
         setProducts(fallback);
         setLoading(false);
       });
@@ -145,7 +115,7 @@ function Health({ onAddToCart }) {
   };
 
   const handleApplyFilters = () => {
-    const refinedCatalog = applyFiltersAndSort(ensureTenPerCategory(products, activeCategory));
+    const refinedCatalog = applyFiltersAndSort(filterProductsByCategory(products, activeCategory));
     setProducts(refinedCatalog);
   };
 
@@ -369,15 +339,25 @@ function Health({ onAddToCart }) {
 
               <div style={{
                 height: '250px',
-                background: '#f8f9fa',
+                background: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#6c757d',
-                fontWeight: 'bold',
-                letterSpacing: '0.02em'
+                overflow: 'hidden'
               }}>
-                Waiting for products
+                <img
+                  src={product.image || (Array.isArray(product.images) ? product.images[0]?.url : '') || '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg'}
+                  alt={product.name}
+                  onError={(event) => {
+                    event.currentTarget.src = '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg';
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
               </div>
 
               <div style={{ padding: '20px' }}>

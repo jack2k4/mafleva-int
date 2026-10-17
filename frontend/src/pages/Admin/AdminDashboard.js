@@ -1,17 +1,19 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 
-const ADMIN_EMAIL = 'admin@mafleva.com';
-const ADMIN_PASSWORD = 'admin123';
+const ADMIN_EMAIL = 'yusuf.nganga@gmail.com';
+const ADMIN_PASSWORD = 'maflevainternational@254';
 
 function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('mf_admin_auth') === '1');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState('products');
   const [analyticsSummary, setAnalyticsSummary] = useState(null);
   const [inventoryAlerts, setInventoryAlerts] = useState([]);
   const [dashboardError, setDashboardError] = useState('');
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [productActionStatus, setProductActionStatus] = useState('');
 
   const [products, setProducts] = useState([
     { id: 1, name: 'Glow Bloom Face Cream', category: 'beauty', price: 45, stock: 30, image: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg' },
@@ -31,26 +33,53 @@ function AdminDashboard() {
     { id: 2, name: 'Mike', email: 'mike@email.com', subject: 'Coupon issue', text: 'Coupon code not working on checkout.', replied: false }
   ]);
 
-  const [coupons, setCoupons] = useState([
-    { id: 1, code: 'WELCOME10', discount: 10, active: true },
-    { id: 2, code: 'BEAUTY15', discount: 15, active: true }
-  ]);
-
   const [promoVideo, setPromoVideo] = useState('/videos/Luxury%20Kandura%20Collection.mhtml');
   const [newVideoUrl, setNewVideoUrl] = useState('');
+
+  const defaultSubCategoryMap = {
+    beauty: 'skincare',
+    clothing: 'women',
+    perfumes: 'women',
+    health: 'wellness'
+  };
+
+  const subCategoryOptions = {
+    beauty: ['skincare', 'herbal', 'oils', 'makeup', 'haircare'],
+    clothing: ['men', 'women', 'kids'],
+    perfumes: ['men', 'women', 'unisex', 'refillable'],
+    health: ['wellness', 'care', 'herbal', 'supplements']
+  };
 
   const [productForm, setProductForm] = useState({
     id: null,
     name: '',
     category: 'beauty',
+    subCategory: defaultSubCategoryMap.beauty,
     price: '',
     stock: '',
-    image: ''
+    image: '',
+    imageFile: null
   });
 
-  const [couponForm, setCouponForm] = useState({ code: '', discount: '' });
-
   const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  const normalizeProduct = (product) => {
+    const imageUrl = product.image || (Array.isArray(product.images) && product.images[0]?.url) || '/images/logo.jpeg';
+    return {
+      ...product,
+      image: imageUrl,
+      images: Array.isArray(product.images) && product.images.length ? product.images : [{ url: imageUrl }],
+      price: Number(product.price || 0),
+      stock: Number(product.stock || 0)
+    };
+  };
+
+  const syncStoredProducts = (nextProducts) => {
+    const normalized = nextProducts.map(normalizeProduct);
+    setProducts(normalized);
+    localStorage.setItem('mafleva_admin_products', JSON.stringify(normalized));
+    window.dispatchEvent(new Event('mafleva-products-updated'));
+  };
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -93,6 +122,31 @@ function AdminDashboard() {
 
     return () => controller.abort();
   }, [isLoggedIn, apiBaseUrl]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const loadProducts = async () => {
+      try {
+        const response = await fetch(apiBaseUrl + '/api/products');
+        if (!response.ok) throw new Error('Failed to fetch products');
+        const data = await response.json();
+        const apiProducts = Array.isArray(data) ? data : (data.products || []);
+
+        if (apiProducts.length > 0) {
+          syncStoredProducts(apiProducts);
+        } else {
+          const storedProducts = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+          if (storedProducts.length > 0) syncStoredProducts(storedProducts);
+        }
+      } catch (error) {
+        const storedProducts = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+        if (storedProducts.length > 0) syncStoredProducts(storedProducts);
+      }
+    };
+
+    loadProducts();
+  }, [apiBaseUrl, isLoggedIn]);
 
   const stats = useMemo(() => {
     const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
@@ -141,20 +195,128 @@ function AdminDashboard() {
   };
 
   const resetProductForm = () => {
-    setProductForm({ id: null, name: '', category: 'beauty', price: '', stock: '', image: '' });
+    setProductForm({
+      id: null,
+      name: '',
+      category: 'beauty',
+      subCategory: defaultSubCategoryMap.beauty,
+      price: '',
+      stock: '',
+      image: '',
+      imageFile: null
+    });
   };
 
-  const saveProduct = (e) => {
+  const handleCategoryChange = (nextCategory) => {
+    setProductForm((prev) => ({
+      ...prev,
+      category: nextCategory,
+      subCategory: defaultSubCategoryMap[nextCategory] || defaultSubCategoryMap.beauty
+    }));
+  };
+
+  const saveProduct = async (e) => {
     e.preventDefault();
     if (!productForm.name || !productForm.price) return;
 
-    if (productForm.id) {
-      setProducts((prev) => prev.map((p) => (p.id === productForm.id ? { ...productForm, price: Number(productForm.price), stock: Number(productForm.stock || 0) } : p)));
-    } else {
-      const nextId = products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1;
-      setProducts((prev) => [...prev, { ...productForm, id: nextId, price: Number(productForm.price), stock: Number(productForm.stock || 0) }]);
+    const hasImageUrl = !!String(productForm.image || '').trim();
+    const hasImageFile = !!productForm.imageFile;
+    if (!hasImageUrl && !hasImageFile) {
+      setProductActionStatus('');
+      setDashboardError('Please provide a product image URL or upload a photo before saving.');
+      return;
     }
-    resetProductForm();
+
+    setProductActionStatus('Saving product...');
+    setDashboardError('');
+
+    const safeImage = productForm.image || '/images/logo.jpeg';
+    const selectedSubCategory = subCategoryOptions[productForm.category]?.includes(productForm.subCategory)
+      ? productForm.subCategory
+      : (defaultSubCategoryMap[productForm.category] || 'skincare');
+
+    const payload = {
+      name: productForm.name,
+      category: productForm.category,
+      subCategory: selectedSubCategory,
+      description: productForm.name,
+      price: Number(productForm.price),
+      discountPrice: Number(productForm.price),
+      stock: Number(productForm.stock || 1),
+      brand: 'Mafleva',
+      rating: 4.8,
+      image: safeImage,
+      images: [{ url: safeImage }]
+    };
+
+    try {
+      let response;
+      let nextProduct;
+      const hasFile = !!productForm.imageFile;
+
+      if (hasFile) {
+        const formData = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (Array.isArray(value)) {
+              formData.append(key, JSON.stringify(value));
+            } else {
+              formData.append(key, value);
+            }
+          }
+        });
+        formData.append('image', productForm.imageFile);
+
+        if (productForm.id) {
+          response = await fetch(apiBaseUrl + '/api/products/' + productForm.id, {
+            method: 'PUT',
+            body: formData
+          });
+        } else {
+          response = await fetch(apiBaseUrl + '/api/products', {
+            method: 'POST',
+            body: formData
+          });
+        }
+      } else {
+        if (productForm.id) {
+          response = await fetch(apiBaseUrl + '/api/products/' + productForm.id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          response = await fetch(apiBaseUrl + '/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to save product');
+      }
+
+      const result = await response.json();
+      nextProduct = result.product || { ...payload, id: productForm.id || Date.now() };
+      setProducts((currentProducts) => {
+        const updatedProducts = productForm.id
+          ? currentProducts.map((p) => (p.id === productForm.id ? normalizeProduct({ ...p, ...nextProduct }) : p))
+          : [...currentProducts, normalizeProduct(nextProduct)];
+
+        localStorage.setItem('mafleva_admin_products', JSON.stringify(updatedProducts));
+        window.dispatchEvent(new Event('mafleva-products-updated'));
+        return updatedProducts;
+      });
+      setProductActionStatus(productForm.id ? 'Product updated successfully.' : 'Product added successfully.');
+      resetProductForm();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      setProductActionStatus('');
+      setDashboardError(error.message || 'Product could not be saved to the backend.');
+    }
   };
 
   const editProduct = (product) => {
@@ -163,27 +325,45 @@ function AdminDashboard() {
       id: product.id,
       name: product.name,
       category: product.category,
+      subCategory: product.subCategory || defaultSubCategoryMap[product.category] || defaultSubCategoryMap.beauty,
       price: String(product.price),
       stock: String(product.stock || 0),
-      image: product.image || ''
+      image: product.image || '',
+      imageFile: null
     });
   };
 
-  const deleteProduct = (id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    if (productForm.id === id) resetProductForm();
+  const deleteProduct = async (id) => {
+    try {
+      setProductActionStatus('Deleting product...');
+      setDashboardError('');
+      const response = await fetch(apiBaseUrl + '/api/products/' + id, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete product');
+      setProducts((currentProducts) => {
+        const updatedProducts = currentProducts.filter((p) => p.id !== id);
+        localStorage.setItem('mafleva_admin_products', JSON.stringify(updatedProducts));
+        window.dispatchEvent(new Event('mafleva-products-updated'));
+        return updatedProducts;
+      });
+      setProductActionStatus('Product deleted successfully.');
+      if (productForm.id === id) resetProductForm();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      setProductActionStatus('');
+      setDashboardError('Product could not be deleted from the backend.');
+    }
   };
 
   const uploadProductPhoto = (event) => {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setProductForm((prev) => ({ ...prev, image: reader.result }));
-      }
-    };
-    reader.readAsDataURL(file);
+
+    const previewUrl = URL.createObjectURL(file);
+    setProductForm((prev) => ({
+      ...prev,
+      image: previewUrl,
+      imageFile: file
+    }));
   };
 
   const updateOrderStatus = (id, status) => {
@@ -192,18 +372,6 @@ function AdminDashboard() {
 
   const markMessageReplied = (id) => {
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, replied: true } : m)));
-  };
-
-  const addCoupon = (e) => {
-    e.preventDefault();
-    if (!couponForm.code || !couponForm.discount) return;
-    const nextId = coupons.length ? Math.max(...coupons.map((c) => c.id)) + 1 : 1;
-    setCoupons((prev) => [...prev, { id: nextId, code: couponForm.code.toUpperCase(), discount: Number(couponForm.discount), active: true }]);
-    setCouponForm({ code: '', discount: '' });
-  };
-
-  const toggleCoupon = (id) => {
-    setCoupons((prev) => prev.map((c) => (c.id === id ? { ...c, active: !c.active } : c)));
   };
 
   const applyPromoVideo = (e) => {
@@ -230,21 +398,39 @@ function AdminDashboard() {
           />
 
           <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>Password</label>
-          <input
-            type="password"
-            value={loginForm.password}
-            onChange={(e) => setLoginForm((prev) => ({ ...prev, password: e.target.value }))}
-            required
-            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '12px' }}
-          />
+          <div style={{ position: 'relative', marginBottom: '12px' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={loginForm.password}
+              onChange={(e) => setLoginForm((prev) => ({ ...prev, password: e.target.value }))}
+              required
+              style={{ width: '100%', padding: '10px 42px 10px 10px', borderRadius: '8px', border: '1px solid #ddd' }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                fontSize: '1.1rem',
+                color: '#6c757d'
+              }}
+            >
+              {showPassword ? '🙈' : '👁️'}
+            </button>
+          </div>
 
           {loginError && <div style={{ color: '#e17055', marginBottom: '12px' }}>{loginError}</div>}
 
           <button type="submit" style={{ width: '100%', padding: '10px 14px', border: 'none', borderRadius: '8px', background: '#ff6b6b', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
             Login
           </button>
-
-          <p style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '12px' }}>Demo: admin@mafleva.com / admin123</p>
         </form>
       </div>
     );
@@ -262,12 +448,10 @@ function AdminDashboard() {
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
           {[
-            ['overview', 'Overview'],
             ['products', 'Products'],
             ['orders', 'Orders'],
             ['messages', 'Messages'],
             ['reports', 'Reports'],
-            ['coupons', 'Coupons'],
             ['video', 'Promo Video']
           ].map(([id, label]) => (
             <button
@@ -288,63 +472,6 @@ function AdminDashboard() {
           ))}
         </div>
 
-        {activeTab === 'overview' && (
-          <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-              <StatCard label="Total Products" value={activeStats.products} />
-              <StatCard label="Total Orders" value={activeStats.orders} />
-              <StatCard label="Customer Messages" value={activeStats.messages} />
-              <StatCard label="Sales Revenue" value={'$' + activeStats.revenue} />
-            </div>
-
-            {dashboardLoading && (
-              <div style={{ marginTop: '12px', color: '#6c757d' }}>Refreshing live analytics...</div>
-            )}
-
-            {dashboardError && (
-              <div style={{ marginTop: '12px', color: '#e17055', fontWeight: 600 }}>{dashboardError}</div>
-            )}
-
-            <div style={{ ...panelStyle, marginTop: '16px' }}>
-              <h3 style={{ marginTop: 0 }}>Inventory Alerts</h3>
-              {activeStats.lowStockProducts.length === 0 ? (
-                <p style={{ color: '#00b894', marginBottom: 0 }}>No low-stock items right now.</p>
-              ) : (
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  {activeStats.lowStockProducts.map((product) => (
-                    <div key={product.id} style={{ ...rowCard, background: '#fff7f5', borderColor: '#ffd3cc' }}>
-                      <div>
-                        <strong>{product.name}</strong>
-                        <div style={{ color: '#e17055', fontSize: '0.9rem' }}>
-                          {product.stock === 0 ? 'Out of stock' : `Only ${product.stock} left`}
-                        </div>
-                      </div>
-                      <span style={{ fontWeight: 'bold', color: '#e17055' }}>{product.category}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={{ ...panelStyle, marginTop: '16px' }}>
-              <h3 style={{ marginTop: 0 }}>Category Performance</h3>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {Object.entries(activeStats.salesByCategory).map(([category, value]) => (
-                  <div key={category}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ textTransform: 'capitalize' }}>{category}</span>
-                      <strong>${value.toFixed(0)}</strong>
-                    </div>
-                    <div style={{ background: '#f0f0f0', borderRadius: '999px', overflow: 'hidden', height: '8px' }}>
-                      <div style={{ width: `${Math.min(100, (value / Math.max(1, activeStats.revenue)) * 100)}%`, background: '#ff6b6b', height: '100%' }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         {activeTab === 'products' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
             <div style={panelStyle}>
@@ -360,34 +487,83 @@ function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((p) => (
+                  {products.map((p) => {
+                    const stockValue = Number(p.stock || 0);
+                    const stockLabel = stockValue <= 0 ? 'Out of stock' : (stockValue <= 5 ? 'Low stock' : 'In stock');
+                    const stockBadgeStyle = stockValue <= 0
+                      ? { background: '#ffe5e2', color: '#c0392b' }
+                      : (stockValue <= 5
+                        ? { background: '#fff4dd', color: '#b9770e' }
+                        : { background: '#e8f8f1', color: '#1e8449' });
+
+                    return (
                     <tr key={p.id} style={{ borderTop: '1px solid #f0f0f0' }}>
                       <td style={tdStyle}>{p.name}</td>
                       <td style={tdStyle}>{p.category}</td>
                       <td style={tdStyle}>${p.price}</td>
-                      <td style={tdStyle}>{p.stock}</td>
                       <td style={tdStyle}>
-                        <button onClick={() => editProduct(p)} style={smallBtn('#0984e3')}>Edit</button>
-                        <button onClick={() => deleteProduct(p.id)} style={smallBtn('#e17055')}>Delete</button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span>{stockValue}</span>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              ...stockBadgeStyle
+                            }}
+                          >
+                            {stockLabel}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={tdStyle}>
+                        <button type="button" onClick={() => editProduct(p)} style={smallBtn('#0984e3')}>Edit</button>
+                        <button type="button" onClick={() => deleteProduct(p.id)} style={smallBtn('#e17055')}>Delete</button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
+
+              {productActionStatus && (
+                <div style={{ marginTop: '12px', color: '#2d3436', fontWeight: 600 }}>
+                  {productActionStatus}
+                </div>
+              )}
             </div>
 
             <div style={panelStyle}>
               <h3>{productForm.id ? 'Edit Product' : 'Add Product'}</h3>
               <form onSubmit={saveProduct}>
                 <input placeholder="Product name" value={productForm.name} onChange={(e) => setProductForm((prev) => ({ ...prev, name: e.target.value }))} style={inputStyle} required />
-                <select value={productForm.category} onChange={(e) => setProductForm((prev) => ({ ...prev, category: e.target.value }))} style={inputStyle}>
+                <select value={productForm.category} onChange={(e) => handleCategoryChange(e.target.value)} style={inputStyle}>
                   <option value="beauty">Beauty</option>
                   <option value="clothing">Clothing</option>
                   <option value="perfumes">Perfumes</option>
+                  <option value="health">Health</option>
                 </select>
+
+                <select
+                  value={productForm.subCategory}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, subCategory: e.target.value }))}
+                  style={inputStyle}
+                >
+                  {(subCategoryOptions[productForm.category] || subCategoryOptions.beauty).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+
                 <input type="number" placeholder="Price" value={productForm.price} onChange={(e) => setProductForm((prev) => ({ ...prev, price: e.target.value }))} style={inputStyle} required />
                 <input type="number" placeholder="Stock" value={productForm.stock} onChange={(e) => setProductForm((prev) => ({ ...prev, stock: e.target.value }))} style={inputStyle} />
-                <input placeholder="Image URL" value={productForm.image} onChange={(e) => setProductForm((prev) => ({ ...prev, image: e.target.value }))} style={inputStyle} />
+                <input
+                  placeholder="Image URL"
+                  value={productForm.image}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, image: e.target.value }))}
+                  style={inputStyle}
+                  required={!productForm.imageFile}
+                />
                 <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>Upload Product Photo</label>
                 <input type="file" accept="image/*" onChange={uploadProductPhoto} style={{ marginBottom: '10px' }} />
 
@@ -463,30 +639,6 @@ function AdminDashboard() {
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === 'coupons' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-            <div style={panelStyle}>
-              <h3>Create Discount Coupon</h3>
-              <form onSubmit={addCoupon}>
-                <input placeholder="Coupon code" value={couponForm.code} onChange={(e) => setCouponForm((prev) => ({ ...prev, code: e.target.value }))} style={inputStyle} required />
-                <input type="number" placeholder="Discount %" value={couponForm.discount} onChange={(e) => setCouponForm((prev) => ({ ...prev, discount: e.target.value }))} style={inputStyle} required />
-                <button type="submit" style={primaryBtn}>Add Coupon</button>
-              </form>
-            </div>
-            <div style={panelStyle}>
-              <h3>Active Coupons</h3>
-              {coupons.map((c) => (
-                <div key={c.id} style={rowCard}>
-                  <div><strong>{c.code}</strong> - {c.discount}%</div>
-                  <button onClick={() => toggleCoupon(c.id)} style={smallBtn(c.active ? '#00b894' : '#6c757d')}>
-                    {c.active ? 'Active' : 'Inactive'}
-                  </button>
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
