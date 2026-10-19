@@ -1,7 +1,9 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function PerfumeSubCategory({ onAddToCart }) {
   const [products, setProducts] = useState([]);
@@ -14,7 +16,7 @@ function PerfumeSubCategory({ onAddToCart }) {
     '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg',
     '/perfumes/1f943a1d5fc12debdd2dfc91cf717cf9.jpg',
     '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg',
-    '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg',
+    '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg',
     '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg'
   ];
 
@@ -26,20 +28,12 @@ function PerfumeSubCategory({ onAddToCart }) {
     perfumeImages[1]
   ];
 
-  useEffect(() => {
-    fetchPerfumes();
-
-    const handleProductUpdate = () => fetchPerfumes();
-    window.addEventListener('mafleva-products-updated', handleProductUpdate);
-    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
-  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
-
-  const fetchPerfumes = () => {
+  const fetchPerfumes = useCallback(() => {
     setLoading(true);
-    let url = 'http://localhost:5000/api/products?category=perfumes';
+    let url = `${API_BASE_URL}/api/products?category=perfumes`;
     
     if (activeCategory !== 'all') {
-      url = 'http://localhost:5000/api/perfumes/' + activeCategory;
+      url = `${API_BASE_URL}/api/perfumes/` + activeCategory;
     }
 
     fetch(url)
@@ -70,7 +64,15 @@ function PerfumeSubCategory({ onAddToCart }) {
         setProducts([]);
         setLoading(false);
       });
-  };
+  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
+
+  useEffect(() => {
+    fetchPerfumes();
+
+    const handleProductUpdate = () => fetchPerfumes();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
+  }, [fetchPerfumes]);
 
   const subCategoryCards = [
     { 

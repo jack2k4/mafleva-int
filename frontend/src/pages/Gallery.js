@@ -15,7 +15,7 @@ const allProducts = [
   { title: 'Wear Motion', category: 'Wear', src: '/wear/62a50cc5b187807962bc6d67691c97d8.jpg', accent: '#dfeaff', type: 'image' },
   { title: 'Beauty Finish', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20%281%29.jpeg', accent: '#d8d4ff', type: 'image' },
   { title: 'Accessories Luxe', category: 'Accessories', src: '/accesories/ca720f38098d7d171e41e23814096d6a.jpg', accent: '#f8d6dd', type: 'image' },
-  { title: 'Fragrance Elixir', category: 'Perfumes', src: '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg', accent: '#cfe8ff', type: 'image' },
+  { title: 'Fragrance Elixir', category: 'Perfumes', src: '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg', accent: '#cfe8ff', type: 'image' },
   { title: 'Wear Atelier', category: 'Wear', src: '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg', accent: '#d9f3d9', type: 'image' },
   { title: 'Beauty Essentials', category: 'Beauty', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20%282%29.jpeg', accent: '#fbe4d1', type: 'image' },
   { title: 'Accessories Core', category: 'Accessories', src: '/accesories/feb8532a0255bb57747e9f2711315f89.jpg', accent: '#e3f5d9', type: 'image' },
@@ -57,17 +57,35 @@ function Gallery() {
     return () => window.removeEventListener('mafleva-gallery-updated', loadCustomGalleryItems);
   }, []);
 
+  const dedupeGalleryItems = (items) => {
+    const seen = new Set();
+    return items.filter((item) => {
+      const key = `${item.type || 'image'}::${item.src || ''}::${item.title || ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const customImageItems = useMemo(
+    () => customGalleryItems.filter((item) => (item.type || 'image') !== 'video'),
+    [customGalleryItems]
+  );
+
+  const customVideoItems = useMemo(
+    () => customGalleryItems.filter((item) => item.type === 'video'),
+    [customGalleryItems]
+  );
+
   const marqueeItems = useMemo(() => {
-    const sourceItems = customGalleryItems.length > 0 ? customGalleryItems : allProducts;
+    const sourceItems = dedupeGalleryItems([...allProducts, ...customImageItems]);
     const shuffled = [...sourceItems].sort(() => Math.random() - 0.5);
     return [...shuffled, ...shuffled];
-  }, [customGalleryItems]);
+  }, [customImageItems]);
 
   const galleryVideos = useMemo(() => {
-    if (customGalleryItems.length === 0) return videoItems;
-    const items = customGalleryItems.filter((item) => item.type === 'video');
-    return items.length > 0 ? items : videoItems;
-  }, [customGalleryItems]);
+    return dedupeGalleryItems([...videoItems, ...customVideoItems]);
+  }, [customVideoItems]);
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 20px 60px' }}>

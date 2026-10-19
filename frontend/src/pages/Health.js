@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function Health({ onAddToCart }) {
   const [products, setProducts] = useState([]);
@@ -58,7 +61,7 @@ function Health({ onAddToCart }) {
 
   const fetchHealth = () => {
     setLoading(true);
-    let url = 'http://localhost:5000/api/products?category=health';
+    let url = `${API_BASE_URL}/api/products?category=health`;
 
     if (activeCategory !== 'all') {
       url = `${url}&subCategory=${activeCategory}`;
@@ -346,10 +349,12 @@ function Health({ onAddToCart }) {
                 overflow: 'hidden'
               }}>
                 <img
-                  src={product.image || (Array.isArray(product.images) ? product.images[0]?.url : '') || '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg'}
+                  src={resolveMediaUrl(
+                    product.image || (Array.isArray(product.images) ? product.images[0]?.url : '') || '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg'
+                  )}
                   alt={product.name}
                   onError={(event) => {
-                    event.currentTarget.src = '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg';
+                    event.currentTarget.src = resolveMediaUrl('/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg');
                   }}
                   style={{
                     display: 'block',

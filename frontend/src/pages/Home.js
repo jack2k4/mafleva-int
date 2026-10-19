@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Testimonials from '../components/common/Testimonials';
 
@@ -65,7 +65,7 @@ const galleryItems = [
   { type: 'image', src: '/wear/62a50cc5b187807962bc6d67691c97d8.jpg' },
   { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20(1).jpeg' },
   { type: 'image', src: '/accesories/ca720f38098d7d171e41e23814096d6a.jpg' },
-  { type: 'image', src: '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg' },
+  { type: 'image', src: '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg' },
   { type: 'image', src: '/wear/732d3d01a39c6e2cc6278e7b7ca7fd20.jpg' },
   { type: 'image', src: '/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31%20(2).jpeg' },
   { type: 'image', src: '/accesories/feb8532a0255bb57747e9f2711315f89.jpg' },
@@ -93,7 +93,7 @@ const clothingLoopImages = [
 ];
 
 const perfumeLoopImages = [
-  '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg',
+  '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg',
   '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg',
   '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg',
   '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg',
@@ -167,7 +167,7 @@ function Home() {
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    background: '#f9f4ee'
+                    background: creamCard
                   }}
                 />
               </div>
@@ -254,7 +254,7 @@ function Home() {
                 >
                   <div
                     style={{
-                      background: '#f9f4ee',
+                      background: creamCard,
                       padding: '30px',
                       textAlign: 'center',
                       borderRadius: '18px',

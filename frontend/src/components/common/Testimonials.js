@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { FaStar, FaQuoteLeft, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaStar, FaQuoteLeft } from 'react-icons/fa';
 
 const Testimonials = ({ 
   title = "What Our Customers Say",
@@ -84,18 +84,6 @@ const Testimonials = ({
     return () => clearInterval(interval);
   }, [autoPlay, autoPlayInterval, isPaused, testimonials.length]);
 
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
-    );
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === 0 ? testimonials.length - 1 : prevIndex - 1
-    );
-  };
-
   const renderStars = (rating) => {
     return [...Array(5)].map((_, index) => (
       <FaStar
@@ -106,84 +94,6 @@ const Testimonials = ({
         }}
       />
     ));
-  };
-
-  // For displaying all testimonials in grid view
-  const renderGrid = () => {
-    return (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: '25px'
-      }}>
-        {testimonials.map((testimonial) => (
-          <div
-            key={testimonial.id}
-            style={{
-              background: 'white',
-              padding: '25px',
-              borderRadius: '10px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              transition: 'transform 0.3s ease'
-            }}
-            className="testimonial-card"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 5px 20px rgba(0,0,0,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-            }}
-          >
-            <div style={{ marginBottom: '15px' }}>
-              {renderStars(testimonial.rating)}
-            </div>
-            <div style={{ marginBottom: '15px' }}>
-              <FaQuoteLeft style={{ color: '#ff6b6b', opacity: 0.3, fontSize: '24px' }} />
-              <p style={{
-                fontSize: '1rem',
-                lineHeight: '1.6',
-                color: '#2d3436',
-                margin: '0'
-              }}>
-                "{testimonial.comment}"
-              </p>
-            </div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '15px',
-              borderTop: '1px solid #f0f0f0',
-              paddingTop: '15px'
-            }}>
-              <img
-                src={testimonial.avatar}
-                alt={testimonial.name}
-                style={{
-                  width: '50px',
-                  height: '50px',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }}
-              />
-              <div>
-                <h4 style={{ margin: '0 0 3px 0', fontSize: '1rem' }}>
-                  {testimonial.name}
-                </h4>
-                <p style={{
-                  margin: 0,
-                  color: '#6c757d',
-                  fontSize: '0.85rem'
-                }}>
-                  {testimonial.role}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
   };
 
   // For the editorial-style testimonial layout matching the reference

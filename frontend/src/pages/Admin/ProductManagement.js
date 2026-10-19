@@ -2,7 +2,8 @@
 import { FaPlus, FaEdit, FaTrash, FaSearch, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = `${API_BASE_URL}/api`;
 
 function ProductManagement() {
   const [products, setProducts] = useState([]);
@@ -29,7 +30,7 @@ function ProductManagement() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(${API_URL}/products);
+      const response = await axios.get(`${API_URL}/products`);
       const data = response.data;
       const productsArray = data.products || data || [];
       setProducts(productsArray);
@@ -52,10 +53,10 @@ function ProductManagement() {
     e.preventDefault();
     try {
       if (editingProduct) {
-        await axios.put(${API_URL}/products/, formData);
+        await axios.put(`${API_URL}/products/${editingProduct.id}`, formData);
         alert('Product updated successfully!');
       } else {
-        await axios.post(${API_URL}/products, formData);
+        await axios.post(`${API_URL}/products`, formData);
         alert('Product added successfully!');
       }
       setShowModal(false);
@@ -70,7 +71,7 @@ function ProductManagement() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(${API_URL}/products/);
+        await axios.delete(`${API_URL}/products/${id}`);
         alert('Product deleted successfully!');
         fetchProducts();
       } catch (error) {

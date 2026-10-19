@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { COUNTRY_OPTIONS, formatCurrency } from '../utils/currency';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 
 function CartPage({
   cart = [],
@@ -59,7 +60,7 @@ function CartPage({
               }}
             >
               <img
-                src={item.image || '/images/logo.jpeg'}
+                src={resolveMediaUrl(item.image || '/images/logo.jpeg')}
                 alt={item.name}
                 style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '12px' }}
               />

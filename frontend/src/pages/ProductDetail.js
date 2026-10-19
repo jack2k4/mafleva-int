@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { formatCurrency, resolveCurrencyFromLocale } from '../utils/currency';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function ProductDetail({ onAddToCart, selectedCurrency }) {
   const { productId } = useParams();
@@ -29,7 +32,7 @@ function ProductDetail({ onAddToCart, selectedCurrency }) {
       setError('');
 
       try {
-        const response = await fetch('http://localhost:5000/api/products/' + productId);
+        const response = await fetch(`${API_BASE_URL}/api/products/` + productId);
 
         if (response.ok) {
           const data = await response.json();
@@ -57,9 +60,9 @@ function ProductDetail({ onAddToCart, selectedCurrency }) {
     };
   }, [productId, fallbackProduct]);
 
-  const imageUrl = product?.image
-    || (Array.isArray(product?.images) ? product.images[0]?.url : '')
-    || '/images/logo.jpeg';
+  const imageUrl = resolveMediaUrl(
+    product?.image || (Array.isArray(product?.images) ? product.images[0]?.url : '') || '/images/logo.jpeg'
+  );
 
   if (loading) {
     return (

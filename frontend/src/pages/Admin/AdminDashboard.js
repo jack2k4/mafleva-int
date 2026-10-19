@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 const ADMIN_EMAIL = 'yusuf.nganga@gmail.com';
 const ADMIN_PASSWORD = 'maflevainternational@254';
@@ -90,12 +90,12 @@ function AdminDashboard() {
     };
   };
 
-  const syncStoredProducts = (nextProducts) => {
+  const syncStoredProducts = useCallback((nextProducts) => {
     const normalized = nextProducts.map(normalizeProduct);
     setProducts(normalized);
     localStorage.setItem('mafleva_admin_products', JSON.stringify(normalized));
     window.dispatchEvent(new Event('mafleva-products-updated'));
-  };
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -162,7 +162,7 @@ function AdminDashboard() {
     };
 
     loadProducts();
-  }, [apiBaseUrl, isLoggedIn]);
+  }, [apiBaseUrl, isLoggedIn, syncStoredProducts]);
 
   const stats = useMemo(() => {
     const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
@@ -260,10 +260,13 @@ function AdminDashboard() {
       discountPrice: Number(productForm.price),
       stock: Number(productForm.stock || 1),
       brand: 'Mafleva',
-      rating: 4.8,
-      image: safeImage,
-      images: [{ url: safeImage }]
+      rating: 4.8
     };
+
+    if (!productForm.imageFile) {
+      payload.image = safeImage;
+      payload.images = [{ url: safeImage }];
+    }
 
     try {
       let response;
@@ -531,6 +534,18 @@ function AdminDashboard() {
           ))}
         </div>
 
+        {dashboardLoading && (
+          <div style={{ marginBottom: '12px', color: '#6c757d', fontWeight: 600 }}>
+            Loading dashboard analytics...
+          </div>
+        )}
+
+        {dashboardError && (
+          <div style={{ marginBottom: '12px', color: '#e17055', fontWeight: 600 }}>
+            {dashboardError}
+          </div>
+        )}
+
         {activeTab === 'products' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
             <div style={panelStyle}>
@@ -783,15 +798,6 @@ function AdminDashboard() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }) {
-  return (
-    <div style={{ background: 'white', borderRadius: '12px', padding: '18px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', minWidth: 0 }}>
-      <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>{label}</div>
-      <div style={{ color: '#2d3436', fontSize: '1.8rem', fontWeight: 'bold' }}>{value}</div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
-﻿import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import { COUNTRY_OPTIONS, resolveCurrencyFromLocale } from './utils/currency';
+import { resolveMediaUrl } from './utils/resolveMediaUrl';
 
 // Import all pages lazily to reduce the initial bundle size.
 const Home = lazy(() => import('./pages/Home'));
@@ -421,7 +422,7 @@ function App() {
       id: productId,
       name: product.name || product.title || 'Mafleva Product',
       price: Number(product.discountPrice ?? product.price ?? 0),
-      image: product.image || product.images?.[0]?.url || '/images/logo.jpeg',
+      image: resolveMediaUrl(product.image || product.images?.[0]?.url || '/images/logo.jpeg'),
       category: product.category || 'general',
       stock: productStock
     };

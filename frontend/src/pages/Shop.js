@@ -1,11 +1,14 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Beauty from './Beauty';
 import Clothing from './Clothing';
 import Health from './Health';
 import PerfumeSubCategory from './PerfumeSubCategory';
 import { formatCurrency, resolveCurrencyFromLocale } from '../utils/currency';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
   const location = useLocation();
@@ -31,7 +34,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
 
   useEffect(() => {
     const loadProducts = () => {
-      let url = 'http://localhost:5000/api/products';
+      let url = `${API_BASE_URL}/api/products`;
       const params = new URLSearchParams();
       
       if (category !== 'all') {
@@ -155,7 +158,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
       '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg',
       '/perfumes/1f943a1d5fc12debdd2dfc91cf717cf9.jpg',
       '/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg',
-      '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg',
+      '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg',
       '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg'
     ],
     health: [
@@ -167,6 +170,7 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
     ]
   };
 
+  // eslint-disable-next-line no-unused-vars
   const fallbackProducts = [
     {
       id: 1,
@@ -437,11 +441,11 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
       : [];
 
     if (product?.image) {
-      return product.image;
+      return resolveMediaUrl(product.image);
     }
 
     if (productImages.length > 0) {
-      return productImages[0];
+      return resolveMediaUrl(productImages[0]);
     }
 
     const productCategory = getNormalizedCategory(product);
@@ -476,7 +480,13 @@ function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
     }
 
     return shuffled;
-  }, []);
+  }, [
+    categoryImageLibrary.beauty,
+    categoryImageLibrary.clothing,
+    categoryImageLibrary.perfumes,
+    categoryImageLibrary.health,
+    categoryImageLibrary.shop
+  ]);
 
   if (category === 'beauty') {
     return (

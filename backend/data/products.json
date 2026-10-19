@@ -11,6 +11,7 @@
     "numReviews": 127,
     "stock": 50,
     "description": "Premium moisturizing face cream with natural ingredients for glowing skin.",
+    "image": "/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg",
     "images": [
       {
         "url": "/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg"
@@ -35,6 +36,7 @@
     "numReviews": 156,
     "stock": 60,
     "description": "Vitamin C serum for brightening and evening skin tone.",
+    "image": "/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg",
     "images": [
       {
         "url": "/images/WhatsApp%20Image%202026-08-12%20at%2018.53.31.jpeg"
@@ -58,6 +60,7 @@
     "numReviews": 89,
     "stock": 45,
     "description": "Gentle herbal face wash with natural ingredients for daily cleansing.",
+    "image": "/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20(1).jpeg",
     "images": [
       {
         "url": "/images/WhatsApp%20Image%202026-08-12%20at%2018.53.34%20(1).jpeg"
@@ -82,6 +85,7 @@
     "numReviews": 156,
     "stock": 55,
     "description": "Pure Moroccan Argan Oil for hair and skin nourishment.",
+    "image": "/images/oils.jpeg",
     "images": [
       {
         "url": "/images/oils.jpeg"
@@ -90,31 +94,6 @@
     "ingredients": [
       "100% Pure Argan Oil"
     ]
-  },
-  {
-    "id": 501,
-    "name": "Women Floral Dream",
-    "price": 89.99,
-    "discountPrice": 79.99,
-    "category": "perfumes",
-    "subCategory": "women",
-    "brand": "Luxury Scents",
-    "rating": 4.9,
-    "numReviews": 156,
-    "stock": 35,
-    "description": "Delicate floral fragrance with notes of rose, jasmine, and vanilla.",
-    "images": [
-      {
-        "url": "/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg"
-      }
-    ],
-    "fragranceNotes": [
-      "Rose",
-      "Jasmine",
-      "Vanilla",
-      "Musk"
-    ],
-    "volume": "100ml"
   },
   {
     "id": 601,
@@ -128,6 +107,7 @@
     "numReviews": 78,
     "stock": 25,
     "description": "Unique unisex fragrance blending Oud with warm Amber notes.",
+    "image": "/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg",
     "images": [
       {
         "url": "/perfumes/6262dda8914ce0fe8f83107ac06b1be2.jpg"

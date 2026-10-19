@@ -73,7 +73,7 @@ const Navbar = ({ cartCount = 0 }) => {
             }}
           >
             <img
-              src="/images/WhatsApp%20Image%202026-08-12%20at%2018.53.30.jpeg"
+              src="/images/logo.jpeg"
               alt="Beauty"
               style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }}
             />

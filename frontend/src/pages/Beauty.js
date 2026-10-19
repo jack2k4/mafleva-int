@@ -2,6 +2,9 @@
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function Beauty({ onAddToCart }) {
   const [products, setProducts] = useState([]);
@@ -164,14 +167,33 @@ function Beauty({ onAddToCart }) {
     haircare: beautyFallbackProducts.filter((product) => product.subCategory === 'haircare').map((product) => product.image)
   };
 
+  const normalizeBeautySubCategory = (value) => {
+    const normalized = String(value || '').trim().toLowerCase();
+    const aliasMap = {
+      habit: 'herbal',
+      herbals: 'herbal',
+      herbs: 'herbal',
+      skin: 'skincare',
+      skincare: 'skincare',
+      hair: 'haircare',
+      'hair-care': 'haircare'
+    };
+
+    if (aliasMap[normalized]) {
+      return aliasMap[normalized];
+    }
+
+    return beautySubCategories.includes(normalized) ? normalized : 'skincare';
+  };
+
   const getBeautyImageForProduct = (product, index) => {
     if (product?.image) {
-      return product.image;
+      return resolveMediaUrl(product.image);
     }
 
     const subCategory = product?.subCategory || 'skincare';
     const candidates = beautyImagesBySubCategory[subCategory] || beautyBannerImages;
-    return candidates[index % candidates.length] || beautyBannerImages[index % beautyBannerImages.length];
+    return resolveMediaUrl(candidates[index % candidates.length] || beautyBannerImages[index % beautyBannerImages.length]);
   };
 
   const applyFiltersAndSort = (items) => {
@@ -200,7 +222,7 @@ function Beauty({ onAddToCart }) {
     const normalizedSource = (sourceProducts || []).map((product, index) => ({
       ...product,
       id: product?.id || `beauty-live-${selectedCategory}-${index}`,
-      subCategory: product?.subCategory || 'skincare',
+      subCategory: normalizeBeautySubCategory(product?.subCategory),
       brand: product?.brand || 'Mafleva Beauty',
       rating: Number(product?.rating || 4.5),
       numReviews: Number(product?.numReviews || 12),
@@ -208,17 +230,13 @@ function Beauty({ onAddToCart }) {
       image: product?.image || getBeautyImageForProduct(product, index)
     }));
 
-    if (normalizedSource.length === 0) {
-      return [];
-    }
-
     const scopedSource = selectedCategory === 'all'
       ? normalizedSource
-      : normalizedSource.filter((product) => product.subCategory === selectedCategory);
+      : normalizedSource.filter((product) => product.subCategory === normalizeBeautySubCategory(selectedCategory));
 
     const scopedFallback = selectedCategory === 'all'
       ? beautyFallbackProducts
-      : beautyFallbackProducts.filter((product) => product.subCategory === selectedCategory);
+      : beautyFallbackProducts.filter((product) => product.subCategory === normalizeBeautySubCategory(selectedCategory));
 
     const fallbackRemainder = scopedFallback.filter((fallbackProduct) => (
       !scopedSource.some((liveProduct) => (
@@ -230,7 +248,7 @@ function Beauty({ onAddToCart }) {
       const grouped = beautySubCategories.flatMap((subCategory) => {
         const live = scopedSource.filter((product) => product.subCategory === subCategory);
         const fallback = fallbackRemainder.filter((product) => product.subCategory === subCategory);
-        return live.length > 0 ? [...live, ...fallback] : [];
+        return [...live, ...fallback];
       });
 
       return grouped;
@@ -249,7 +267,7 @@ function Beauty({ onAddToCart }) {
 
   const fetchBeauty = () => {
     setLoading(true);
-    let url = 'http://localhost:5000/api/products?category=beauty';
+    let url = `${API_BASE_URL}/api/products?category=beauty`;
     
     if (activeCategory !== 'all') {
       url = url + '&subCategory=' + activeCategory;
@@ -258,7 +276,14 @@ function Beauty({ onAddToCart }) {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        let productsData = ensureBeautyCatalog(data.products || [], activeCategory);
+        const liveApiProducts = Array.isArray(data?.products) ? data.products : [];
+        const storedProducts = JSON.parse(localStorage.getItem('mafleva_admin_products') || '[]');
+        const storedBeautyProducts = storedProducts.filter(
+          (product) => String(product?.category || '').toLowerCase() === 'beauty'
+        );
+        const sourceProducts = liveApiProducts.length > 0 ? liveApiProducts : storedBeautyProducts;
+
+        let productsData = ensureBeautyCatalog(sourceProducts, activeCategory);
         productsData = applyFiltersAndSort(productsData);
         setProducts(productsData);
         setLoading(false);

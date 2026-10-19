@@ -2,6 +2,9 @@
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function Clothing({ onAddToCart }) {
   const [products, setProducts] = useState([]);
@@ -54,7 +57,7 @@ function Clothing({ onAddToCart }) {
 
   const fetchClothing = () => {
     setLoading(true);
-    let url = 'http://localhost:5000/api/products?category=clothing';
+    let url = `${API_BASE_URL}/api/products?category=clothing`;
     
     if (activeCategory !== 'all') {
       url = url + '&subCategory=' + activeCategory;
@@ -116,7 +119,7 @@ function Clothing({ onAddToCart }) {
 
   const getCategoryImage = (product, index) => {
     if (product?.image) {
-      return product.image;
+      return resolveMediaUrl(product.image);
     }
 
     const productImages = Array.isArray(product?.images)
@@ -124,7 +127,7 @@ function Clothing({ onAddToCart }) {
       : [];
 
     if (productImages.length > 0) {
-      return productImages[0];
+      return resolveMediaUrl(productImages[0]);
     }
 
     const productKey = String(product?.id ?? product?.name ?? index);
@@ -137,7 +140,7 @@ function Clothing({ onAddToCart }) {
       all: wearImages[0]
     };
 
-    return bySubCategory[product?.subCategory] || wearImages[fallbackIndex];
+    return resolveMediaUrl(bySubCategory[product?.subCategory] || wearImages[fallbackIndex]);
   };
 
   const renderStars = (rating) => {
@@ -461,7 +464,12 @@ function Clothing({ onAddToCart }) {
                   src={getCategoryImage(product, index)}
                   alt={product.name}
                   onError={(event) => {
-                    event.currentTarget.src = getCategoryImage(product, index);
+                    const fallbackImage = resolveMediaUrl(
+                      wearImages[index % wearImages.length] || wearImages[0]
+                    );
+                    if (event.currentTarget.src !== fallbackImage) {
+                      event.currentTarget.src = fallbackImage;
+                    }
                   }}
                   style={{
                     display: 'block',

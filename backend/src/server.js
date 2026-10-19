@@ -17,6 +17,130 @@ const dataDir = path.join(__dirname, '..', 'data');
 const productsDataPath = path.join(dataDir, 'products.json');
 fs.mkdirSync(dataDir, { recursive: true });
 
+const CATEGORY_DEFAULT_SUBCATEGORY = {
+  beauty: 'skincare',
+  clothing: 'women',
+  perfumes: 'unisex',
+  health: 'wellness'
+};
+
+const CATEGORY_ALIASES = {
+  beauty: 'beauty',
+  beauti: 'beauty',
+  skincare: 'beauty',
+  cosmetic: 'beauty',
+  cosmetics: 'beauty',
+  clothing: 'clothing',
+  cloth: 'clothing',
+  wear: 'clothing',
+  fashion: 'clothing',
+  perfume: 'perfumes',
+  perfumes: 'perfumes',
+  fragrance: 'perfumes',
+  fragrances: 'perfumes',
+  scent: 'perfumes',
+  scents: 'perfumes',
+  health: 'health',
+  wellness: 'health',
+  care: 'health'
+};
+
+const SUBCATEGORY_ALIASES = {
+  beauty: {
+    habit: 'herbal',
+    herbals: 'herbal',
+    herbs: 'herbal',
+    skin: 'skincare',
+    'skin care': 'skincare',
+    hair: 'haircare',
+    'hair care': 'haircare'
+  },
+  clothing: {
+    man: 'men',
+    male: 'men',
+    mens: 'men',
+    woman: 'women',
+    female: 'women',
+    womens: 'women',
+    kid: 'kids',
+    child: 'kids',
+    children: 'kids'
+  },
+  perfumes: {
+    man: 'men',
+    mens: 'men',
+    woman: 'women',
+    womens: 'women',
+    refill: 'refillable'
+  },
+  health: {
+    herbals: 'herbal',
+    supplement: 'supplements'
+  }
+};
+
+const normalizeCategory = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return CATEGORY_ALIASES[normalized] || (CATEGORY_DEFAULT_SUBCATEGORY[normalized] ? normalized : 'beauty');
+};
+
+const normalizeSubCategory = (value, category) => {
+  const normalizedCategory = normalizeCategory(category);
+  const normalizedValue = String(value || '').trim().toLowerCase();
+  const categoryAliases = SUBCATEGORY_ALIASES[normalizedCategory] || {};
+  if (categoryAliases[normalizedValue]) {
+    return categoryAliases[normalizedValue];
+  }
+
+  if (normalizedValue) {
+    return normalizedValue;
+  }
+
+  return CATEGORY_DEFAULT_SUBCATEGORY[normalizedCategory] || 'skincare';
+};
+
+const toRelativeUploadPath = (value) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const match = value.match(/\/uploads\/[^"]+$/);
+  return match ? match[0] : value;
+};
+
+const normalizeStoredProductPaths = (product) => {
+  const nextProduct = { ...product };
+  nextProduct.category = normalizeCategory(nextProduct.category);
+  nextProduct.subCategory = normalizeSubCategory(nextProduct.subCategory, nextProduct.category);
+
+  const firstImageUrl = Array.isArray(nextProduct.images)
+    ? nextProduct.images.find((image) => image && typeof image === 'object' && image.url)?.url
+    : '';
+
+  if (nextProduct.image) {
+    nextProduct.image = toRelativeUploadPath(nextProduct.image);
+  } else if (firstImageUrl) {
+    nextProduct.image = toRelativeUploadPath(firstImageUrl);
+  }
+
+  if (Array.isArray(nextProduct.images)) {
+    nextProduct.images = nextProduct.images.map((image) => {
+      if (!image || typeof image !== 'object') {
+        return image;
+      }
+
+      return {
+        ...image,
+        url: toRelativeUploadPath(image.url)
+      };
+    });
+  } else if (nextProduct.image) {
+    nextProduct.images = [{ url: nextProduct.image }];
+  }
+
+  return nextProduct;
+};
+
 const readProductsFromDisk = () => {
   try {
     if (!fs.existsSync(productsDataPath)) {
@@ -25,7 +149,16 @@ const readProductsFromDisk = () => {
 
     const raw = fs.readFileSync(productsDataPath, 'utf8');
     const parsed = JSON.parse(raw || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    const normalized = parsed.map(normalizeStoredProductPaths);
+    if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {
+      writeProductsToDisk(normalized);
+    }
+
+    return normalized;
   } catch (error) {
     return [];
   }
@@ -75,16 +208,18 @@ const findProductIndexById = (id) => {
   return products.findIndex((product) => String(product.id) === productId);
 };
 
-const normalizeUploadedProduct = (body, uploadedFile) => {
+const normalizeUploadedProduct = (body, uploadedFile, req) => {
+  const normalizedCategory = normalizeCategory(body.category);
+  const normalizedSubCategory = normalizeSubCategory(body.subCategory, normalizedCategory);
   const imageUrl = uploadedFile
-    ? `http://localhost:${PORT}/uploads/${uploadedFile.filename}`
-    : (body.image || body.imageUrl || '/images/logo.jpeg');
+    ? `/uploads/${uploadedFile.filename}`
+    : toRelativeUploadPath(body.image || body.imageUrl || '/images/logo.jpeg');
 
   const payload = {
     ...body,
     name: body.name || 'New Product',
-    category: body.category || 'beauty',
-    subCategory: body.subCategory || (body.category === 'beauty' ? 'skincare' : (body.category === 'clothing' ? 'women' : 'unisex')),
+    category: normalizedCategory,
+    subCategory: normalizedSubCategory,
     price: Number(body.price || 0),
     discountPrice: Number(body.discountPrice ?? body.price ?? 0),
     stock: Number(body.stock || 0),
@@ -95,7 +230,7 @@ const normalizeUploadedProduct = (body, uploadedFile) => {
     images: uploadedFile ? [{ url: imageUrl }] : (Array.isArray(body.images) ? body.images : [{ url: imageUrl }])
   };
 
-  if (body.images && typeof body.images === 'string') {
+  if (!uploadedFile && body.images && typeof body.images === 'string') {
     try {
       payload.images = JSON.parse(body.images);
     } catch (err) {
@@ -238,7 +373,7 @@ const defaultProducts = [
     numReviews: 45,
     stock: 20,
     description: 'Premium refillable perfume with eco-friendly packaging.',
-    images: [{ url: '/perfumes/8fd0f7aa4fef27c2fa0deb1104a42a42.jpg' }],
+    images: [{ url: '/perfumes/aebf343bbc78ebd41c49ab993a51ceb3.jpg' }],
     fragranceNotes: ['Rose', 'Oud', 'Bergamot', 'Amber'],
     volume: '100ml + Refill'
   },
@@ -422,7 +557,7 @@ app.get('/api/products/:id', (req, res) => {
 // POST - Create new product
 app.post('/api/products', upload.single('image'), (req, res) => {
   try {
-    const newProduct = normalizeUploadedProduct(req.body, req.file);
+    const newProduct = normalizeUploadedProduct(req.body, req.file, req);
     newProduct.id = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
     newProduct.numReviews = Number(newProduct.numReviews || 0);
     products.push(newProduct);
@@ -445,7 +580,11 @@ app.put('/api/products/:id', upload.single('image'), (req, res) => {
   }
 
   try {
-    const updated = normalizeUploadedProduct({ ...products[index], ...req.body }, req.file || (req.body.image ? { filename: req.body.image.split('/uploads/').pop() } : null));
+    const updated = normalizeUploadedProduct(
+      { ...products[index], ...req.body },
+      req.file || null,
+      req
+    );
     products[index] = { ...products[index], ...updated };
     writeProductsToDisk(products);
     res.json({
@@ -640,18 +779,37 @@ app.get('/api/analytics/summary', (req, res) => {
 // START SERVER
 // ============================================
 
-app.listen(PORT, () => {
+const logServerStarted = (port) => {
   console.log('========================================');
   console.log('Mafleva International Server');
   console.log('========================================');
-  console.log('Server running on http://localhost:' + PORT);
-  console.log('Health: http://localhost:' + PORT + '/health');
-  console.log('Products: http://localhost:' + PORT + '/api/products');
-  console.log('Orders: http://localhost:' + PORT + '/api/orders');
-  console.log('Users: http://localhost:' + PORT + '/api/users');
+  console.log('Server running on http://localhost:' + port);
+  console.log('Health: http://localhost:' + port + '/health');
+  console.log('Products: http://localhost:' + port + '/api/products');
+  console.log('Orders: http://localhost:' + port + '/api/orders');
+  console.log('Users: http://localhost:' + port + '/api/users');
   console.log('========================================');
   console.log('Total Products: ' + products.length);
   console.log('Total Orders: ' + orders.length);
   console.log('Total Users: ' + users.length);
   console.log('========================================');
-});
+};
+
+const startServer = (preferredPort) => {
+  const port = Number(preferredPort);
+  const server = app.listen(port, () => {
+    logServerStarted(port);
+  });
+
+  server.on('error', (error) => {
+    if (error && error.code === 'EADDRINUSE') {
+      console.warn(`Port ${port} is busy. Trying port ${port + 1}...`);
+      startServer(port + 1);
+      return;
+    }
+
+    throw error;
+  });
+};
+
+startServer(PORT);

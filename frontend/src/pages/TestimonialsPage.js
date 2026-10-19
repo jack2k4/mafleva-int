@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Testimonials from '../components/common/Testimonials';
 
 function TestimonialsPage() {
