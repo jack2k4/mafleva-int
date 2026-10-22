@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
 
 function Health({ onAddToCart }) {
   const [products, setProducts] = useState([]);
@@ -13,7 +13,6 @@ function Health({ onAddToCart }) {
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('default');
-  const healthSubCategories = ['wellness', 'care'];
 
   const filterProductsByCategory = (sourceProducts, selectedCategory) => {
     if (!Array.isArray(sourceProducts) || sourceProducts.length === 0) {
@@ -51,15 +50,7 @@ function Health({ onAddToCart }) {
     return productsData;
   };
 
-  useEffect(() => {
-    fetchHealth();
-
-    const handleProductUpdate = () => fetchHealth();
-    window.addEventListener('mafleva-products-updated', handleProductUpdate);
-    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
-  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
-
-  const fetchHealth = () => {
+  const fetchHealth = useCallback(() => {
     setLoading(true);
     let url = `${API_BASE_URL}/api/products?category=health`;
 
@@ -93,7 +84,15 @@ function Health({ onAddToCart }) {
         setProducts(fallback);
         setLoading(false);
       });
-  };
+  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
+
+  useEffect(() => {
+    fetchHealth();
+
+    const handleProductUpdate = () => fetchHealth();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
+  }, [fetchHealth]);
 
   const categories = [
     { id: 'all', name: 'All Health Products', icon: '🌿' },

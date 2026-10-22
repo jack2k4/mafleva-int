@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
 
 function Beauty({ onAddToCart }) {
   const [products, setProducts] = useState([]);
@@ -257,15 +257,7 @@ function Beauty({ onAddToCart }) {
     return [...scopedSource, ...fallbackRemainder];
   };
 
-  useEffect(() => {
-    fetchBeauty();
-
-    const handleProductUpdate = () => fetchBeauty();
-    window.addEventListener('mafleva-products-updated', handleProductUpdate);
-    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
-  }, [activeCategory]);
-
-  const fetchBeauty = () => {
+  const fetchBeauty = useCallback(() => {
     setLoading(true);
     let url = `${API_BASE_URL}/api/products?category=beauty`;
     
@@ -294,7 +286,15 @@ function Beauty({ onAddToCart }) {
         setProducts(fallback);
         setLoading(false);
       });
-  };
+  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
+
+  useEffect(() => {
+    fetchBeauty();
+
+    const handleProductUpdate = () => fetchBeauty();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
+  }, [fetchBeauty]);
 
   // Subcategory categories for filtering
   const categories = [
@@ -305,17 +305,6 @@ function Beauty({ onAddToCart }) {
     { id: 'makeup', name: 'Makeup', icon: '/images 1/ba741899489fc321a99b0860f1d38847.jpg' },
     { id: 'haircare', name: 'Haircare', icon: '/images/WhatsApp Image 2026-08-12 at 18.53.35 (1).jpeg' }
   ];
-
-  const getCategoryIcon = (product) => {
-    switch(product.subCategory) {
-      case 'skincare': return '✨';
-      case 'herbal': return '🌿';
-      case 'oils': return '🧴';
-      case 'makeup': return '💄';
-      case 'haircare': return '💇‍♀️';
-      default: return '💄';
-    }
-  };
 
   const renderStars = (rating) => {
     const stars = [];

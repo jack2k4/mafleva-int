@@ -1,9 +1,11 @@
-import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import { COUNTRY_OPTIONS, resolveCurrencyFromLocale } from './utils/currency';
 import { resolveMediaUrl } from './utils/resolveMediaUrl';
+
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
 
 // Import all pages lazily to reduce the initial bundle size.
 const Home = lazy(() => import('./pages/Home'));
@@ -120,7 +122,7 @@ const Navbar = ({ cartCount = 0 }) => {
   );
 };
 
-const paymentMethods = ['M-Pesa', 'Airtel Money', 'Visa', 'Mastercard', 'PayPal', 'Stripe'];
+const paymentMethods = ['M-Pesa', 'Visa', 'Mastercard'];
 const socialLinks = [
   { name: 'Facebook', url: 'https://www.facebook.com/share/1JC9Kzb4eU/', icon: 'f' },
   { name: 'Instagram', url: 'https://www.instagram.com/mafleva?psln=Y3p4a2d2OGlpcnIz', icon: '◎' },
@@ -378,6 +380,29 @@ function App() {
     }
   });
 
+  const clearCart = useCallback(() => setCart([]), []);
+
+  const startCheckout = async (checkoutDetails) => {
+    const items = cart.map((item) => ({ productId: item.id, quantity: Number(item.quantity) }));
+    const response = await fetch(`${API_BASE_URL}/api/checkout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        customer: checkoutDetails,
+        items,
+        currency: selectedCurrency,
+        country: selectedCountry,
+        shippingAddress: checkoutDetails.address
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Checkout could not be started.');
+    window.location.assign(data.checkoutUrl);
+  };
+
   useEffect(() => {
     localStorage.setItem('mafleva-cart', JSON.stringify(cart));
   }, [cart]);
@@ -485,6 +510,7 @@ function App() {
                 <Route path="/perfumes" element={<Navigate to="/shop" replace />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/account" element={<Account />} />
+                <Route path="/payment/return" element={<PaymentReturn onPaymentSuccess={clearCart} />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/testimonials" element={<TestimonialsPage />} />
                 <Route path="/admin" element={<AdminDashboard />} />
@@ -499,6 +525,7 @@ function App() {
                       selectedCountry={selectedCountry}
                       selectedCurrency={selectedCurrency}
                       onCountryChange={setSelectedCountry}
+                      onCheckout={startCheckout}
                     />
                   }
                 />
@@ -530,11 +557,11 @@ const SEOManager = ({ defaultSeo }) => {
       <meta property="og:title" content={mergedSeo.title} />
       <meta property="og:description" content={mergedSeo.description} />
       <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:image" content="/images/logo.jpeg" />
+      <meta property="og:image" content={`${window.location.origin}/images/logo.jpeg`} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={mergedSeo.title} />
       <meta name="twitter:description" content={mergedSeo.description} />
-      <meta name="twitter:image" content="/images/logo.jpeg" />
+      <meta name="twitter:image" content={`${window.location.origin}/images/logo.jpeg`} />
     </Helmet>
   );
 };
@@ -544,5 +571,46 @@ const RouteLoading = () => (
     Loading page...
   </div>
 );
+
+const PaymentReturn = ({ onPaymentSuccess }) => {
+  const location = useLocation();
+  const [message, setMessage] = useState('Confirming your payment…');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const txRef = params.get('tx_ref');
+    const transactionId = params.get('transaction_id');
+    if (params.get('status') !== 'successful' || !txRef || !transactionId) {
+      setMessage('Payment was not completed. You can return to your cart and try again.');
+      return undefined;
+    }
+
+    let active = true;
+    fetch(`${API_BASE_URL}/api/payments/verify`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tx_ref: txRef, transaction_id: transactionId })
+    }).then(async (response) => {
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Payment is still being verified.');
+      if (!active) return;
+      onPaymentSuccess();
+      setMessage(`Payment confirmed for order ${result.orderNumber}. We’ll email your receipt and delivery updates.`);
+    }).catch((error) => {
+      if (active) setMessage(`${error.message} Your order will update when payment confirmation arrives.`);
+    });
+
+    return () => { active = false; };
+  }, [location.search, onPaymentSuccess]);
+
+  return (
+    <section style={{ maxWidth: '760px', margin: '48px auto', padding: '32px', textAlign: 'center' }}>
+      <h1>Payment status</h1>
+      <p role="status">{message}</p>
+      <Link to="/shop">Continue shopping</Link>
+    </section>
+  );
+};
 
 export default App;

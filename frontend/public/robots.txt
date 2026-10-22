@@ -5,4 +5,4 @@ Disallow: /admin
 Disallow: /account
 Disallow: /cart
 
-Sitemap: https://example.com/sitemap.xml
+Sitemap: https://mafleva.com/sitemap.xml

@@ -9,7 +9,6 @@ const EXCHANGE_RATES = {
   TZS: 2590,
   GHS: 15.8,
   RWF: 1340,
-  ETB: 56.5
 };
 
 export const COUNTRY_OPTIONS = [
@@ -22,8 +21,7 @@ export const COUNTRY_OPTIONS = [
   { label: 'United States', value: 'US', currency: 'USD' },
   { label: 'Europe', value: 'EU', currency: 'EUR' },
   { label: 'Ghana', value: 'GH', currency: 'GHS' },
-  { label: 'Rwanda', value: 'RW', currency: 'RWF' },
-  { label: 'Ethiopia', value: 'ET', currency: 'ETB' }
+  { label: 'Rwanda', value: 'RW', currency: 'RWF' }
 ];
 
 const COUNTRY_CURRENCY = {
@@ -40,8 +38,7 @@ const COUNTRY_CURRENCY = {
   ES: 'EUR',
   IT: 'EUR',
   GH: 'GHS',
-  RW: 'RWF',
-  ET: 'ETB'
+  RW: 'RWF'
 };
 
 export function getBrowserLocale() {
@@ -70,7 +67,6 @@ export function resolveCurrencyFromLocale(locale = getBrowserLocale()) {
   if (normalizedLocale.includes('de') || normalizedLocale.includes('fr') || normalizedLocale.includes('es') || normalizedLocale.includes('it')) return 'EUR';
   if (normalizedLocale.includes('gh')) return 'GHS';
   if (normalizedLocale.includes('rw')) return 'RWF';
-  if (normalizedLocale.includes('et')) return 'ETB';
 
   return 'KES';
 }

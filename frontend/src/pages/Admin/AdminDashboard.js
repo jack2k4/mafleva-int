@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-const ADMIN_EMAIL = 'yusuf.nganga@gmail.com';
-const ADMIN_PASSWORD = 'maflevainternational@254';
+const ADMIN_AUTH_TOKEN_KEY = 'mf_admin_token';
 
 function AdminDashboard() {
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('mf_admin_auth') === '1');
+  const [isLoggedIn, setIsLoggedIn] = useState(Boolean(localStorage.getItem(ADMIN_AUTH_TOKEN_KEY)));
+  const [authToken, setAuthToken] = useState(localStorage.getItem(ADMIN_AUTH_TOKEN_KEY) || '');
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,11 +23,7 @@ function AdminDashboard() {
     { id: 4, name: 'Signature Perfume', category: 'perfumes', price: 89, stock: 11, image: '/perfumes/0a39becdd6041d93bb9b9b5645501342.jpg' }
   ]);
 
-  const [orders, setOrders] = useState([
-    { id: 'ORD-1001', customer: 'Jane Doe', total: 132, status: 'Pending', date: '2026-10-02' },
-    { id: 'ORD-1002', customer: 'John Kim', total: 89, status: 'Shipped', date: '2026-10-03' },
-    { id: 'ORD-1003', customer: 'Aisha Noor', total: 214, status: 'Delivered', date: '2026-10-04' }
-  ]);
+  const [orders, setOrders] = useState([]);
 
   const [messages, setMessages] = useState([
     { id: 1, name: 'Sarah', email: 'sarah@email.com', subject: 'Order delay', text: 'Please help check my order status.', replied: false },
@@ -77,7 +73,12 @@ function AdminDashboard() {
     imageFile: null
   });
 
-  const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const apiBaseUrl = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
+
+  const withAuthHeaders = (extraHeaders = {}) => ({
+    ...extraHeaders,
+    Authorization: `Bearer ${authToken}`
+  });
 
   const normalizeProduct = (product) => {
     const imageUrl = product.image || (Array.isArray(product.images) && product.images[0]?.url) || '/images/logo.jpeg';
@@ -98,6 +99,41 @@ function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    if (!authToken) {
+      setIsLoggedIn(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const validateToken = async () => {
+      try {
+        const response = await fetch(apiBaseUrl + '/api/admin/me', {
+          signal: controller.signal,
+          headers: withAuthHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error('Session expired');
+        }
+
+        setIsLoggedIn(true);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setAuthToken('');
+          setIsLoggedIn(false);
+          localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
+          setLoginError('Session expired. Please login again.');
+        }
+      }
+    };
+
+    validateToken();
+
+    return () => controller.abort();
+  }, [authToken, apiBaseUrl, withAuthHeaders]);
+
+  useEffect(() => {
     if (!isLoggedIn) return;
 
     const controller = new AbortController();
@@ -108,8 +144,14 @@ function AdminDashboard() {
 
       try {
         const [analyticsResponse, alertsResponse] = await Promise.all([
-          fetch(apiBaseUrl + '/api/analytics/summary', { signal: controller.signal }),
-          fetch(apiBaseUrl + '/api/inventory/alerts?threshold=10', { signal: controller.signal })
+          fetch(apiBaseUrl + '/api/analytics/summary', {
+            signal: controller.signal,
+            headers: withAuthHeaders()
+          }),
+          fetch(apiBaseUrl + '/api/inventory/alerts?threshold=10', {
+            signal: controller.signal,
+            headers: withAuthHeaders()
+          })
         ]);
 
         if (!analyticsResponse.ok) {
@@ -137,14 +179,27 @@ function AdminDashboard() {
     loadDashboardData();
 
     return () => controller.abort();
-  }, [isLoggedIn, apiBaseUrl]);
+  }, [isLoggedIn, apiBaseUrl, authToken, withAuthHeaders]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    fetch(apiBaseUrl + '/api/orders', { headers: withAuthHeaders() })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Orders could not be loaded.');
+        setOrders(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => setDashboardError(error.message || 'Orders could not be loaded.'));
+  }, [isLoggedIn, apiBaseUrl, authToken, withAuthHeaders]);
 
   useEffect(() => {
     if (!isLoggedIn) return;
 
     const loadProducts = async () => {
       try {
-        const response = await fetch(apiBaseUrl + '/api/products');
+        const response = await fetch(apiBaseUrl + '/api/products', {
+          headers: withAuthHeaders()
+        });
         if (!response.ok) throw new Error('Failed to fetch products');
         const data = await response.json();
         const apiProducts = Array.isArray(data) ? data : (data.products || []);
@@ -162,7 +217,7 @@ function AdminDashboard() {
     };
 
     loadProducts();
-  }, [apiBaseUrl, isLoggedIn, syncStoredProducts]);
+  }, [apiBaseUrl, isLoggedIn, syncStoredProducts, authToken, withAuthHeaders]);
 
   const stats = useMemo(() => {
     const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
@@ -194,20 +249,40 @@ function AdminDashboard() {
       }
     : stats;
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (loginForm.email === ADMIN_EMAIL && loginForm.password === ADMIN_PASSWORD) {
+
+    setLoginError('');
+
+    try {
+      const response = await fetch(apiBaseUrl + '/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: loginForm.email,
+          password: loginForm.password
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.token) {
+        setLoginError(data.message || 'Invalid admin email or password.');
+        return;
+      }
+
+      setAuthToken(data.token);
       setIsLoggedIn(true);
-      setLoginError('');
-      localStorage.setItem('mf_admin_auth', '1');
-      return;
+      localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, data.token);
+      setLoginForm({ email: '', password: '' });
+    } catch (error) {
+      setLoginError('Unable to login right now. Please try again.');
     }
-    setLoginError('Invalid admin email or password.');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('mf_admin_auth');
+    setAuthToken('');
+    localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
   };
 
   const resetProductForm = () => {
@@ -289,11 +364,13 @@ function AdminDashboard() {
         if (productForm.id) {
           response = await fetch(apiBaseUrl + '/api/products/' + productForm.id, {
             method: 'PUT',
+            headers: withAuthHeaders(),
             body: formData
           });
         } else {
           response = await fetch(apiBaseUrl + '/api/products', {
             method: 'POST',
+            headers: withAuthHeaders(),
             body: formData
           });
         }
@@ -301,13 +378,13 @@ function AdminDashboard() {
         if (productForm.id) {
           response = await fetch(apiBaseUrl + '/api/products/' + productForm.id, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(payload)
           });
         } else {
           response = await fetch(apiBaseUrl + '/api/products', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(payload)
           });
         }
@@ -356,7 +433,10 @@ function AdminDashboard() {
     try {
       setProductActionStatus('Deleting product...');
       setDashboardError('');
-      const response = await fetch(apiBaseUrl + '/api/products/' + id, { method: 'DELETE' });
+      const response = await fetch(apiBaseUrl + '/api/products/' + id, {
+        method: 'DELETE',
+        headers: withAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to delete product');
       setProducts((currentProducts) => {
         const updatedProducts = currentProducts.filter((p) => p.id !== id);
@@ -385,8 +465,19 @@ function AdminDashboard() {
     }));
   };
 
-  const updateOrderStatus = (id, status) => {
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+  const updateOrderStatus = async (order, status) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/orders/${order.id}`, {
+        method: 'PUT',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ status, fulfillmentStatus: status.toLowerCase() })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Order status could not be updated.');
+      setOrders((current) => current.map((item) => (item.id === order.id ? data.order : item)));
+    } catch (error) {
+      setDashboardError(error.message || 'Order status could not be updated.');
+    }
   };
 
   const markMessageReplied = (id) => {
@@ -661,17 +752,18 @@ function AdminDashboard() {
         {activeTab === 'orders' && (
           <div style={panelStyle}>
             <h3>Order Management</h3>
+            {orders.length === 0 && <p>No paid orders yet.</p>}
             {orders.map((o) => (
               <div key={o.id} style={rowCard}>
-                <div>
-                  <strong>{o.id}</strong> - {o.customer} - ${o.total}
-                  <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>{o.date}</div>
+                <div style={{ flex: 1 }}>
+                  <strong>{o.orderNumber || o.id}</strong> - {o.customerName || o.customerEmail} - {o.currency} {Number(o.total || 0).toFixed(2)}
+                  <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>{o.date ? new Date(o.date).toLocaleString() : ''} · Payment: {o.paymentStatus || 'unknown'}</div>
+                  <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>{o.customerEmail} · {o.customerPhone} · {o.shippingAddress}</div>
+                  <ul style={{ marginTop: '6px' }}>{(o.items || []).map((item) => <li key={item.productId}>{item.quantity} × {item.name}</li>)}</ul>
+                  {o.trackingNumber && <div>Tracking: {o.trackingNumber}</div>}
                 </div>
-                <select value={o.status} onChange={(e) => updateOrderStatus(o.id, e.target.value)} style={{ padding: '8px', borderRadius: '8px' }}>
-                  <option>Pending</option>
-                  <option>Shipped</option>
-                  <option>Delivered</option>
-                  <option>Cancelled</option>
+                <select disabled={o.paymentStatus !== 'successful'} value={o.status} onChange={(e) => updateOrderStatus(o, e.target.value)} style={{ padding: '8px', borderRadius: '8px' }}>
+                  {[o.status, 'Processing', 'Packed', 'Shipped', 'Delivered'].filter((status, index, list) => list.indexOf(status) === index).map((status) => <option key={status}>{status}</option>)}
                 </select>
               </div>
             ))}

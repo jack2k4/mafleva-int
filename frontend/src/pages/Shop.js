@@ -8,7 +8,7 @@ import { formatCurrency, resolveCurrencyFromLocale } from '../utils/currency';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
 
 function Shop({ defaultCategory = 'all', onAddToCart, selectedCurrency }) {
   const location = useLocation();

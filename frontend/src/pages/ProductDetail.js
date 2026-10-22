@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { formatCurrency, resolveCurrencyFromLocale } from '../utils/currency';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
 
 function ProductDetail({ onAddToCart, selectedCurrency }) {
   const { productId } = useParams();

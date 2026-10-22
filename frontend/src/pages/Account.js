@@ -1,33 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
 
 const STORAGE_KEYS = {
-  customers: 'mf_customers',
-  session: 'mf_customer_session',
-  orders: 'mf_customer_orders'
+  session: 'mf_customer_session'
 };
-
-const sampleOrders = (customerName) => [
-  {
-    id: 'MF-2048',
-    date: '2026-09-28',
-    status: 'Delivered',
-    total: 84.5,
-    items: [
-      customerName + ' Signature Glow Kit',
-      'Mafleva Luxe Body Oil'
-    ]
-  },
-  {
-    id: 'MF-1976',
-    date: '2026-09-11',
-    status: 'Processing',
-    total: 129.99,
-    items: [
-      'Mafleva Classic Casual Fit',
-      'Velvet Oud Perfume'
-    ]
-  }
-];
 
 const readJson = (key, fallback) => {
   try {
@@ -52,27 +30,35 @@ function Account() {
   const [orderHistory, setOrderHistory] = useState([]);
 
   useEffect(() => {
-    const session = readJson(STORAGE_KEYS.session, null);
-    if (!session) {
-      return;
-    }
-
-    setCurrentCustomer(session);
-    setActiveTab('orders');
-
-    const ordersByEmail = readJson(STORAGE_KEYS.orders, {});
-    setOrderHistory(ordersByEmail[session.email] || []);
+    localStorage.removeItem('mf_customers');
+    localStorage.removeItem('mf_customer_orders');
+    fetch(`${API_BASE_URL}/api/customers/me`, { credentials: 'include' }).then(async (customerResponse) => {
+      if (!customerResponse.ok) {
+        localStorage.removeItem(STORAGE_KEYS.session);
+        return;
+      }
+      const customerData = await customerResponse.json();
+      const ordersResponse = await fetch(`${API_BASE_URL}/api/customers/orders`, { credentials: 'include' });
+      const ordersData = ordersResponse.ok ? await ordersResponse.json() : { orders: [] };
+      setCurrentCustomer(customerData.customer);
+      setOrderHistory(ordersData.orders || []);
+      setActiveTab('orders');
+      saveJson(STORAGE_KEYS.session, customerData.customer);
+    }).catch(() => {});
   }, []);
 
-  const syncCustomerSession = (customer) => {
+  const syncCustomerSession = async (customer) => {
     setCurrentCustomer(customer);
     saveJson(STORAGE_KEYS.session, customer);
-    const ordersByEmail = readJson(STORAGE_KEYS.orders, {});
-    setOrderHistory(ordersByEmail[customer.email] || []);
+    const response = await fetch(`${API_BASE_URL}/api/customers/orders`, {
+      credentials: 'include'
+    });
+    const data = await response.json();
+    setOrderHistory(response.ok ? data.orders || [] : []);
     setActiveTab('orders');
   };
 
-  const handleRegister = (event) => {
+  const handleRegister = async (event) => {
     event.preventDefault();
     setAuthError('');
     setAuthMessage('');
@@ -86,58 +72,57 @@ function Account() {
       return;
     }
 
-    const customers = readJson(STORAGE_KEYS.customers, []);
-    const existingCustomer = customers.find((customer) => customer.email === email);
-
-    if (existingCustomer) {
-      setAuthError('An account with that email already exists. Please log in instead.');
-      setActiveTab('login');
+    if (password.length < 12) {
+      setAuthError('Use a password with at least 12 characters.');
       return;
     }
-
-    const newCustomer = {
-      fullName,
-      email,
-      password,
-      joinedAt: new Date().toISOString()
-    };
-
-    const nextCustomers = [...customers, newCustomer];
-    saveJson(STORAGE_KEYS.customers, nextCustomers);
-
-    const ordersByEmail = readJson(STORAGE_KEYS.orders, {});
-    if (!ordersByEmail[email]) {
-      ordersByEmail[email] = sampleOrders(fullName.split(' ')[0] || 'Customer');
-      saveJson(STORAGE_KEYS.orders, ordersByEmail);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/customers/register`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, email, password })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Could not create your account.');
+      await syncCustomerSession(data.customer);
+      setRegisterForm({ fullName: '', email: '', password: '' });
+      setAuthMessage('Your account has been created and you are now signed in.');
+    } catch (error) {
+      setAuthError(error.message || 'Could not connect to the account service.');
     }
-
-    const customerSession = { fullName: newCustomer.fullName, email: newCustomer.email, joinedAt: newCustomer.joinedAt };
-    syncCustomerSession(customerSession);
-    setRegisterForm({ fullName: '', email: '', password: '' });
-    setAuthMessage('Your account has been created and you are now signed in.');
   };
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
     setAuthError('');
     setAuthMessage('');
 
     const email = loginForm.email.trim().toLowerCase();
     const password = loginForm.password;
-    const customers = readJson(STORAGE_KEYS.customers, []);
-    const customer = customers.find((entry) => entry.email === email && entry.password === password);
-
-    if (!customer) {
-      setAuthError('Invalid email or password.');
-      return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/customers/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Invalid email or password.');
+      await syncCustomerSession(data.customer);
+      setLoginForm({ email: '', password: '' });
+      setAuthMessage('You are signed in to your Mafleva account.');
+    } catch (error) {
+      setAuthError(error.message || 'Could not connect to the account service.');
     }
-
-    syncCustomerSession({ fullName: customer.fullName, email: customer.email, joinedAt: customer.joinedAt });
-    setLoginForm({ email: '', password: '' });
-    setAuthMessage('You are signed in to your Mafleva account.');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/customers/logout`, { method: 'POST', credentials: 'include' });
+    } catch (error) {
+      // Clear the local view even when the API is unavailable.
+    }
     localStorage.removeItem(STORAGE_KEYS.session);
     setCurrentCustomer(null);
     setOrderHistory([]);
@@ -309,12 +294,12 @@ function Account() {
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ color: '#8e6847', fontWeight: 700 }}>{order.status}</div>
-                            <div style={{ color: '#2d3436', marginTop: '4px', fontWeight: 700 }}>${order.total.toFixed(2)}</div>
+                            <div style={{ color: '#2d3436', marginTop: '4px', fontWeight: 700 }}>{order.currency} {Number(order.total).toFixed(2)}</div>
                           </div>
                         </div>
                         <ul style={{ margin: 0, paddingLeft: '18px', color: '#5c5248', lineHeight: '1.8' }}>
                           {order.items.map((item) => (
-                            <li key={item}>{item}</li>
+                            <li key={item.productId || item.name}>{item.quantity} × {item.name}</li>
                           ))}
                         </ul>
                       </div>
@@ -328,7 +313,7 @@ function Account() {
                 <div style={{ display: 'grid', gap: '14px' }}>
                   {[
                     'Register once and keep your details ready for future orders.',
-                    'Sign in from any browser on this device and view your saved history.',
+                    'Sign in securely from any browser and view your order history.',
                     'Track past purchases in one place with status and item summaries.'
                   ].map((text) => (
                     <div key={text} style={{ padding: '16px 18px', background: '#f7f1e7', borderRadius: '16px', color: '#5c5248', lineHeight: '1.7' }}>

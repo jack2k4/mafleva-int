@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaShoppingCart, FaFilter } from 'react-icons/fa';
 import StructuredData, { buildCatalogStructuredData } from '../components/seo/StructuredData';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
 
 function Clothing({ onAddToCart }) {
   const [products, setProducts] = useState([]);
@@ -13,7 +13,6 @@ function Clothing({ onAddToCart }) {
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('default');
-  const clothingSubCategories = ['men', 'women', 'kids'];
 
   const wearImages = [
     '/wear/23626f85d3836f72d6a10dc547adb601.jpg',
@@ -47,15 +46,7 @@ function Clothing({ onAddToCart }) {
     );
   };
 
-  useEffect(() => {
-    fetchClothing();
-
-    const handleProductUpdate = () => fetchClothing();
-    window.addEventListener('mafleva-products-updated', handleProductUpdate);
-    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
-  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
-
-  const fetchClothing = () => {
+  const fetchClothing = useCallback(() => {
     setLoading(true);
     let url = `${API_BASE_URL}/api/products?category=clothing`;
     
@@ -108,7 +99,15 @@ function Clothing({ onAddToCart }) {
         setProducts(fallback);
         setLoading(false);
       });
-  };
+  }, [activeCategory, priceRange.min, priceRange.max, sortBy]);
+
+  useEffect(() => {
+    fetchClothing();
+
+    const handleProductUpdate = () => fetchClothing();
+    window.addEventListener('mafleva-products-updated', handleProductUpdate);
+    return () => window.removeEventListener('mafleva-products-updated', handleProductUpdate);
+  }, [fetchClothing]);
 
   const categories = [
     { id: 'all', name: 'All Clothing', image: wearImages[0] },

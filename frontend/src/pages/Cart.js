@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { COUNTRY_OPTIONS, formatCurrency } from '../utils/currency';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
@@ -10,13 +10,29 @@ function CartPage({
   onUpdateQuantity,
   selectedCountry = 'KE',
   selectedCurrency = 'KES',
-  onCountryChange
+  onCountryChange,
+  onCheckout
 }) {
+  const [checkoutDetails, setCheckoutDetails] = useState({ fullName: '', email: '', phone: '', address: '' });
+  const [checkoutError, setCheckoutError] = useState('');
+  const [checkingOut, setCheckingOut] = useState(false);
   const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-KE';
   const isLocalDelivery = selectedCountry === 'KE';
   const shippingLabel = isLocalDelivery ? 'Delivery' : 'Shipping';
   const shipping = cart.length > 0 ? (isLocalDelivery ? 0 : 12) : 0;
   const total = subtotal + shipping;
+
+  const submitCheckout = async (event) => {
+    event.preventDefault();
+    setCheckoutError('');
+    setCheckingOut(true);
+    try {
+      await onCheckout({ ...checkoutDetails, address: checkoutDetails.address });
+    } catch (error) {
+      setCheckoutError(error.message || 'Checkout could not be started. Please try again.');
+      setCheckingOut(false);
+    }
+  };
 
   if (cart.length === 0) {
     return (
@@ -163,22 +179,34 @@ function CartPage({
             <span>{formatCurrency(total, locale, selectedCurrency)}</span>
           </div>
 
-          <button
-            type="button"
-            style={{
-              width: '100%',
-              padding: '14px 18px',
-              background: '#ff6b6b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '999px',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            Checkout
-          </button>
+          <form onSubmit={submitCheckout} style={{ display: 'grid', gap: '10px', marginBottom: '20px' }}>
+            <label htmlFor="checkout-name" style={{ fontWeight: 600 }}>Full name</label>
+            <input id="checkout-name" required autoComplete="name" value={checkoutDetails.fullName} onChange={(event) => setCheckoutDetails((current) => ({ ...current, fullName: event.target.value }))} />
+            <label htmlFor="checkout-email" style={{ fontWeight: 600 }}>Email address</label>
+            <input id="checkout-email" type="email" required autoComplete="email" value={checkoutDetails.email} onChange={(event) => setCheckoutDetails((current) => ({ ...current, email: event.target.value }))} />
+            <label htmlFor="checkout-phone" style={{ fontWeight: 600 }}>Phone number</label>
+            <input id="checkout-phone" type="tel" required autoComplete="tel" value={checkoutDetails.phone} onChange={(event) => setCheckoutDetails((current) => ({ ...current, phone: event.target.value }))} />
+            <label htmlFor="checkout-address" style={{ fontWeight: 600 }}>Delivery address</label>
+            <textarea id="checkout-address" required autoComplete="street-address" rows="3" value={checkoutDetails.address} onChange={(event) => setCheckoutDetails((current) => ({ ...current, address: event.target.value }))} />
+            {checkoutError && <p role="alert" style={{ color: '#b42318', margin: 0 }}>{checkoutError}</p>}
+            <button
+              type="submit"
+              disabled={checkingOut}
+              style={{
+                width: '100%',
+                padding: '14px 18px',
+                background: checkingOut ? '#9ca3af' : '#ff6b6b',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                cursor: checkingOut ? 'wait' : 'pointer'
+              }}
+            >
+              {checkingOut ? 'Opening secure checkout…' : 'Checkout securely'}
+            </button>
+          </form>
 
           <Link
             to="/shop"
